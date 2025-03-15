@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ficha de Personaje D&D 5e</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Contenedor para la imagen del personaje (nuevo) -->
+      <div class="character-portrait-container">
+        <div class="character-portrait-sticky">
+          <div class="character-portrait">
+            <img
+              id="character-image"
+              src="images/default-character.png"
+              alt="Imagen del personaje"
+            />
+            <div class="portrait-controls">
+              <label for="upload-portrait" class="upload-btn"
+                >Cambiar imagen</label
+              >
+              <input
+                type="file"
+                id="upload-portrait"
+                accept="image/*"
+                style="display: none"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor para el contenido principal -->
+      <div class="main-content">
+        <div class="header">
+          <h1>D&D 5ª Edición</h1>
+          <p class="character-title">Ficha de Personaje</p>
+        </div>
+
+        <div class="section">
+          <h2>Información Básica</h2>
+          <div class="basic-info">
+            <div class="info-item">
+              <label for="character-name">Nombre:</label>
+              <input
+                type="text"
+                id="character-name"
+                placeholder="Nombre de tu personaje"
+              />
+            </div>
+            <div class="info-item">
+              <label>Nivel:</label>
+              <div class="counter-container">
+                <button
+                  class="counter-button"
+                  onclick="adjustCounter('level', -1)"
+                >
+                  -
+                </button>
+                <span id="level" class="counter-value">1</span>
+                <button
+                  class="counter-button"
+                  onclick="adjustCounter('level', 1)"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="info-item">
+              <label>Raza:</label>
+              <input type="text" id="race" placeholder="Raza" />
+            </div>
+            <div class="info-item">
+              <label>Clase:</label>
+              <input type="text" id="class" placeholder="Clase" />
+            </div>
+            <div class="info-item">
+              <label>Trasfondo:</label>
+              <input type="text" id="background" placeholder="Trasfondo" />
+            </div>
+            <div class="info-item">
+              <label>Alineamiento:</label>
+              <input type="text" id="alignment" placeholder="Alineamiento" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Características</h2>
+          <div class="abilities">
+            <div class="ability" data-ability="str">
+              <div class="ability-name">FUERZA</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+            <div class="ability" data-ability="dex">
+              <div class="ability-name">DESTREZA</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+            <div class="ability" data-ability="con">
+              <div class="ability-name">CONSTITUCIÓN</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+            <div class="ability" data-ability="int">
+              <div class="ability-name">INTELIGENCIA</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+            <div class="ability" data-ability="wis">
+              <div class="ability-name">SABIDURÍA</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+            <div class="ability" data-ability="cha">
+              <div class="ability-name">CARISMA</div>
+              <input
+                type="number"
+                class="ability-score"
+                value="10"
+                onchange="updateAbilityMod(this)"
+              />
+              <div class="ability-mod">+0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Estadísticas de Combate</h2>
+          <div class="combat-stats">
+            <div class="combat-stat">
+              <div class="combat-stat-name">CLASE DE ARMADURA</div>
+              <input
+                type="number"
+                id="armor-class"
+                class="combat-stat-value"
+                value="10"
+              />
+            </div>
+            <div class="combat-stat">
+              <div class="combat-stat-name">INICIATIVA</div>
+              <input
+                type="number"
+                id="initiative"
+                class="combat-stat-value"
+                value="0"
+              />
+            </div>
+            <div class="combat-stat">
+              <div class="combat-stat-name">VELOCIDAD</div>
+              <input
+                type="text"
+                id="speed"
+                class="combat-stat-value"
+                value="9m"
+              />
+            </div>
+            <div class="combat-stat">
+              <div class="combat-stat-name">PUNTOS DE VIDA</div>
+              <div class="hp-container">
+                <input
+                  type="number"
+                  id="current-hp"
+                  class="hp-current"
+                  value="10"
+                />
+                /
+                <input
+                  type="number"
+                  id="max-hp"
+                  class="hp-current"
+                  value="10"
+                />
+              </div>
+            </div>
+          </div>
+
+          <h3>Tiradas de Salvación</h3>
+          <div class="skills" id="saving-throws">
+            <div class="skill-item" data-skill="str-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Fuerza</span>
+              <span class="skill-mod">+0</span>
+            </div>
+            <div class="skill-item" data-skill="dex-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Destreza</span>
+              <span class="skill-mod">+0</span>
+            </div>
+            <div class="skill-item" data-skill="con-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Constitución</span>
+              <span class="skill-mod">+0</span>
+            </div>
+            <div class="skill-item" data-skill="int-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Inteligencia</span>
+              <span class="skill-mod">+0</span>
+            </div>
+            <div class="skill-item" data-skill="wis-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Sabiduría</span>
+              <span class="skill-mod">+0</span>
+            </div>
+            <div class="skill-item" data-skill="cha-save">
+              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <span>Carisma</span>
+              <span class="skill-mod">+0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Pericias</h2>
+          <div class="skills" id="skills-list">
+            <!-- Pericias se cargarán desde el JSON -->
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Rasgos y Habilidades</h2>
+          <div id="features-container">
+            <!-- Rasgos se cargarán desde el JSON -->
+          </div>
+          <button onclick="addFeature()" style="margin-top: 10px">
+            Añadir Rasgo
+          </button>
+        </div>
+
+        <div class="section">
+          <h2>Hechizos</h2>
+          <div id="spells-container">
+            <!-- Hechizos se cargarán desde el JSON -->
+          </div>
+          <div class="spell-add" style="margin-top: 15px">
+            <input
+              type="text"
+              id="new-spell"
+              placeholder="Añadir nuevo hechizo"
+            />
+            <select id="spell-level-select">
+              <option value="cantrip">Truco</option>
+              <option value="1">Nivel 1</option>
+              <option value="2">Nivel 2</option>
+              <option value="3">Nivel 3</option>
+              <option value="4">Nivel 4</option>
+              <option value="5">Nivel 5</option>
+              <option value="6">Nivel 6</option>
+              <option value="7">Nivel 7</option>
+              <option value="8">Nivel 8</option>
+              <option value="9">Nivel 9</option>
+            </select>
+            <button onclick="addSpell()">Añadir</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Ataques y Armas</h2>
+          <div class="attacks-header">
+            <div class="attack-col-name">Nombre</div>
+            <div class="attack-col-bonus">Bonificador</div>
+            <div class="attack-col-damage">Daño</div>
+            <div class="attack-col-type">Tipo</div>
+            <div class="attack-col-range">Alcance</div>
+            <div class="attack-col-properties">Propiedades</div>
+            <div class="attack-col-actions"></div>
+          </div>
+          <div id="attacks-list">
+            <!-- Las armas se cargarán desde el JSON -->
+          </div>
+          <div class="attack-add">
+            <input type="text" id="new-attack-name" placeholder="Nombre" />
+            <input
+              type="text"
+              id="new-attack-bonus"
+              placeholder="+0"
+              style="width: 60px"
+            />
+            <input
+              type="text"
+              id="new-attack-damage"
+              placeholder="1d8"
+              style="width: 80px"
+            />
+            <select id="new-attack-type">
+              <option value="cortante">Cortante</option>
+              <option value="perforante">Perforante</option>
+              <option value="contundente">Contundente</option>
+              <option value="ácido">Ácido</option>
+              <option value="frío">Frío</option>
+              <option value="fuego">Fuego</option>
+              <option value="fuerza">Fuerza</option>
+              <option value="eléctrico">Eléctrico</option>
+              <option value="necrótico">Necrótico</option>
+              <option value="psíquico">Psíquico</option>
+              <option value="radiante">Radiante</option>
+              <option value="trueno">Trueno</option>
+              <option value="veneno">Veneno</option>
+            </select>
+            <input
+              type="text"
+              id="new-attack-range"
+              placeholder="Alcance"
+              style="width: 80px"
+            />
+            <input
+              type="text"
+              id="new-attack-properties"
+              placeholder="Propiedades"
+            />
+            <button onclick="addAttack()">Añadir</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Idiomas y Competencias</h2>
+          <div>
+            <div class="info-item">
+              <label>Idiomas:</label>
+              <div id="languages-container" style="margin-top: 5px">
+                <div
+                  id="languages-list"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
+                  "
+                >
+                  <!-- Los idiomas se cargarán desde el JSON -->
+                </div>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px">
+                  <input
+                    type="text"
+                    id="new-language"
+                    placeholder="Añadir idioma..."
+                    style="flex-grow: 1"
+                  />
+                  <button onclick="addLanguage()">Añadir</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-item" style="margin-top: 15px">
+              <label>Otras Competencias:</label>
+              <div id="proficiencies-container" style="margin-top: 5px">
+                <div
+                  id="proficiencies-list"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
+                  "
+                >
+                  <!-- Las competencias se cargarán desde el JSON -->
+                </div>
+                <div style="display: flex; gap: 5px">
+                  <input
+                    type="text"
+                    id="new-proficiency"
+                    placeholder="Añadir competencia..."
+                    style="flex-grow: 1"
+                  />
+                  <button onclick="addProficiency()">Añadir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Equipo</h2>
+          <div id="equipment-list" class="equipment-list">
+            <!-- Equipo se cargará desde el JSON -->
+          </div>
+
+          <div class="equipment-item" style="margin-top: 10px">
+            <span>Monedas:</span>
+            <input
+              type="number"
+              id="gold"
+              value="0"
+              style="width: 60px; margin: 0 5px"
+            />
+            po
+            <input
+              type="number"
+              id="silver"
+              value="0"
+              style="width: 60px; margin: 0 5px"
+            />
+            pp
+            <input
+              type="number"
+              id="copper"
+              value="0"
+              style="width: 60px; margin: 0 5px"
+            />
+            pc
+          </div>
+
+          <div class="equipment-add">
+            <input
+              type="text"
+              id="new-equipment"
+              placeholder="Añadir nuevo equipo"
+            />
+            <button onclick="addEquipment()">Añadir</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Rasgos de Personalidad</h2>
+          <div class="traits-section">
+            <div>
+              <div class="trait">
+                <div class="trait-name">Personalidad</div>
+                <textarea
+                  id="personality-traits"
+                  class="notes-box"
+                  placeholder="Describe la personalidad de tu personaje"
+                ></textarea>
+              </div>
+
+              <div class="trait">
+                <div class="trait-name">Ideal</div>
+                <textarea
+                  id="ideals"
+                  class="notes-box"
+                  placeholder="¿Cuáles son los ideales de tu personaje?"
+                ></textarea>
+              </div>
+            </div>
+
+            <div>
+              <div class="trait">
+                <div class="trait-name">Vínculo</div>
+                <textarea
+                  id="bonds"
+                  class="notes-box"
+                  placeholder="¿Qué vínculos tiene tu personaje?"
+                ></textarea>
+              </div>
+
+              <div class="trait">
+                <div class="trait-name">Defecto</div>
+                <textarea
+                  id="flaws"
+                  class="notes-box"
+                  placeholder="¿Cuáles son los defectos de tu personaje?"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Notas</h2>
+          <textarea
+            id="notes"
+            class="notes-box"
+            style="width: 100%"
+            placeholder="Notas adicionales de tu personaje y aventuras"
+          ></textarea>
+        </div>
+
+        <div class="section">
+          <h2>Cargar/Guardar Personaje</h2>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px">
+            <button onclick="exportCharacterToJson()" style="flex: 1">
+              Guardar como JSON
+            </button>
+            <input
+              type="file"
+              id="import-json"
+              class="file-input"
+              accept=".json"
+            />
+            <button
+              onclick="document.getElementById('import-json').click()"
+              style="flex: 1"
+            >
+              Cargar desde JSON
+            </button>
+          </div>
+        </div>
+
+        <div class="section" id="dice-roller-section">
+          <h2>Tirador de Dados</h2>
+          <div class="dice-container">
+            <div class="dice-options">
+              <button onclick="rollDie(4)" class="dice-button">d4</button>
+              <button onclick="rollDie(6)" class="dice-button">d6</button>
+              <button onclick="rollDie(8)" class="dice-button">d8</button>
+              <button onclick="rollDie(10)" class="dice-button">d10</button>
+              <button onclick="rollDie(12)" class="dice-button">d12</button>
+              <button onclick="rollDie(20)" class="dice-button">d20</button>
+              <button onclick="rollDie(100)" class="dice-button">d100</button>
+            </div>
+            <div class="custom-roll">
+              <input
+                type="number"
+                id="dice-count"
+                min="1"
+                max="10"
+                value="1"
+                class="dice-input"
+              />
+              <span>d</span>
+              <select id="dice-type" class="dice-select">
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+                <option value="20" selected>20</option>
+                <option value="100">100</option>
+              </select>
+              <button onclick="rollCustomDice()" class="dice-button">
+                Tirar dados
+              </button>
+              <input
+                type="number"
+                id="dice-modifier"
+                value="0"
+                class="dice-input"
+              />
+              <span>Modificador</span>
+            </div>
+            <div class="dice-result-container">
+              <div id="dice-animation" class="dice-animation">
+                <!-- Dice animation placeholder -->
+              </div>
+              <div id="dice-result" class="dice-result">Resultado: -</div>
+              <div id="dice-details" class="dice-details"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/skills.js"></script>
+    <script src="js/features.js"></script>
+    <script src="js/spells.js"></script>
+    <script src="js/equipment.js"></script>
+    <script src="js/attacks.js"></script>
+    <script src="js/dice.js"></script>
+    <script src="js/character-portrait.js"></script>
+    <script src="js/character-data.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

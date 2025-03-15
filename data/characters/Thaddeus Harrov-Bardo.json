@@ -1,0 +1,222 @@
+{
+  "basicInfo": {
+    "name": "Thaddeus Harrov",
+    "level": "1",
+    "race": "Hobgoblin",
+    "class": "Bardo",
+    "background": "Noble",
+    "alignment": "Caótico Neutral"
+  },
+  "abilities": {
+    "str": 6,
+    "dex": 14,
+    "con": 16,
+    "int": 14,
+    "wis": 12,
+    "cha": 18
+  },
+  "combat": {
+    "armorClass": "14",
+    "initiative": "2",
+    "speed": "30ft",
+    "hp": {
+      "current": "11",
+      "max": "11"
+    }
+  },
+  "savingThrows": {
+    "str-save": false,
+    "dex-save": true,
+    "con-save": false,
+    "int-save": false,
+    "wis-save": false,
+    "cha-save": true
+  },
+  "skills": {
+    "acrobacias": false,
+    "manejo-de-animales": false,
+    "arcanos": true,
+    "atletismo": false,
+    "engaño": false,
+    "historia": true,
+    "perspicacia": false,
+    "intimidación": false,
+    "investigación": true,
+    "medicina": false,
+    "naturaleza": false,
+    "percepción": false,
+    "interpretación": true,
+    "persuasión": true,
+    "religión": false,
+    "juego-de-manos": false,
+    "sigilo": false,
+    "supervivencia": false
+  },
+  "languages": [
+    "Común",
+    "Goblin"
+  ],
+  "proficiencies": [
+    "Armaduras ligeras",
+    "Armas simples",
+    "Estoque",
+    "Espada larga",
+    "Herramientas de artista (pintura)",
+    "Instrumentos musicales"
+  ],
+  "features": [
+    {
+      "name": "Visión en la Oscuridad",
+      "description": "Puedes ver en la oscuridad hasta 18 metros (60 pies).",
+      "limitedUse": false,
+      "uses": null
+    },
+    {
+      "name": "Entrenamiento Marcial",
+      "description": "Competencia con dos armas marciales a tu elección y armadura ligera.",
+      "limitedUse": false,
+      "uses": null
+    },
+    {
+      "name": "Salvar el Orgullo",
+      "description": "Cuando fallas una tirada, añade un bonificador igual al número de aliados visibles (máx. +3). Una vez por descanso.",
+      "limitedUse": true,
+      "uses": {
+        "current": 0,
+        "max": 1
+      }
+    },
+    {
+      "name": "Inspiración Bárdica (d6)",
+      "description": "Como acción adicional, concede un dado d6 a una criatura (no a ti mismo). Puede añadirlo a una tirada.",
+      "limitedUse": true,
+      "uses": {
+        "current": 0,
+        "max": 3
+      }
+    },
+    {
+      "name": "Insightful Gaze (1 per long rest)",
+      "description": "- You can spend 1 Hit Die when making an investigation, arcana or perception check to add 1d4 to the result.\n\n- You can spend 1 Hit Dice to analyze a mechanical or magical object, instantly learning one of its properties or functions",
+      "limitedUse": true,
+      "uses": {
+        "current": 0,
+        "max": 1
+      }
+    }
+  ],
+  "spells": {
+    "1": {
+      "spells": [
+        {
+          "name": "Dissonant Whispers",
+          "prepared": true
+        },
+        {
+          "name": "Heroism",
+          "prepared": true
+        },
+        {
+          "name": "Healing Word",
+          "prepared": true
+        },
+        {
+          "name": "Sleep",
+          "prepared": true
+        }
+      ],
+      "slots": {
+        "total": 2,
+        "used": 0
+      }
+    },
+    "2": {
+      "spells": [],
+      "slots": {
+        "total": 0,
+        "used": 0
+      }
+    },
+    "cantrip": {
+      "spells": [
+        {
+          "name": "Minor Illusion",
+          "prepared": true
+        },
+        {
+          "name": "Vicius Mockery",
+          "prepared": true
+        }
+      ],
+      "slots": null
+    }
+  },
+  "equipment": [
+    {
+      "name": "Espada Larga (1d8 cortante)",
+      "equipped": true
+    },
+    {
+      "name": "Paquete de diplomático",
+      "equipped": false
+    },
+    {
+      "name": "Flauta",
+      "equipped": true
+    },
+    {
+      "name": "Ropa fina",
+      "equipped": true
+    },
+    {
+      "name": "Anillo de sello",
+      "equipped": true
+    },
+    {
+      "name": "Carta de presentación",
+      "equipped": false
+    },
+    {
+      "name": "La Mirada De Lo Oculto (Lens)",
+      "equipped": false
+    }
+  ],
+  "attacks": [
+    {
+      "name": "Estoque",
+      "bonus": "+5",
+      "damage": "1d8+3",
+      "type": "perforante",
+      "range": "Cuerpo a cuerpo",
+      "properties": "Sutil"
+    },
+    {
+      "name": "Espada Larga",
+      "bonus": "+2",
+      "damage": "1d8+0",
+      "type": "cortante",
+      "range": "Cuerpo a cuerpo",
+      "properties": "Versátil (1d10)"
+    },
+    {
+      "name": "Vicious Mockery",
+      "bonus": "+7",
+      "damage": "1d4",
+      "type": "psíquico",
+      "range": "18 metros",
+      "properties": "Truco, VS, Desventaja en la siguiente tirada de ataque"
+    }
+  ],
+  "money": {
+    "gold": "25",
+    "silver": "0",
+    "copper": "0"
+  },
+  "personality": {
+    "traits": "Veo presagios en cada evento y acción. El mundo trata de hablarme.",
+    "ideals": "Arte. La única expresión verdadera viene de experimentar lo que otros solamente observan.",
+    "bonds": "Debo capturar la esencia de la muerte en mi arte, aunque signifique arriesgarlo todo.",
+    "flaws": "Mi obsesión con la muerte me ciega ante los peligros de perseguirla."
+  },
+  "notes": "• Artista obsesionado con experimentar la muerte para crear una obra maestra\n• Viajó a Chult siguiendo una misteriosa invitación\n• De familia adinerada, padre era un político respetado\n• Supersticioso, ve señales y presagios en todas partes\n\nRecibí una carta sellada con un sigilo desconocido que me invitaba a buscar la muerte en la jungla, donde el arte y la muerte se entrelazan, donde el velo es más delgado. No hay remitente, solo instrucciones para buscar un contacto que puede llevarme a Chult.\n\nMe acompaña Javi, un cazador de tesoros que se autodenomina el mejor del mundo. Syndra Silvane nos está proporcionando el pasaje, pero parece tener sus propios motivos relacionados con algo llamado la 'Maldición de la Muerte'."
+}
