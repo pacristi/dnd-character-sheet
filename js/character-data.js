@@ -1,12 +1,69 @@
 /**
- * Módulo de gestión de datos de personaje
- * Maneja la recopilación, guardado, carga y aplicación de datos del personaje
+ * Character Data Management Module
+ * Handles character data collection, storing, loading, and application
  */
 
-// Recopilar todos los datos del personaje
+// Module scope collection of function references from other modules
+const moduleRegistry = {
+    portrait: {
+        get: null,
+        apply: null
+    },
+    spells: {
+        collect: null,
+        apply: null
+    },
+    attacks: {
+        collect: null,
+        apply: null
+    }
+};
+
+// Register external module functions
+function registerModuleFunction(module, functionName, func) {
+    if (!moduleRegistry[module]) {
+        moduleRegistry[module] = {};
+    }
+    moduleRegistry[module][functionName] = func;
+}
+
+// Initialize module registrations when document is ready
+document.addEventListener('DOMContentLoaded', function () {
+    // Register portrait functions
+    if (typeof getPortraitData === 'function') {
+        registerModuleFunction('portrait', 'get', getPortraitData);
+    }
+
+    if (typeof applyPortraitData === 'function') {
+        registerModuleFunction('portrait', 'apply', applyPortraitData);
+    }
+
+    // Register spells functions
+    if (typeof collectSpells === 'function') {
+        registerModuleFunction('spells', 'collect', collectSpells);
+    }
+
+    if (typeof applySpells === 'function') {
+        registerModuleFunction('spells', 'apply', applySpells);
+    }
+
+    // Register attacks functions
+    if (typeof collectAttacks === 'function') {
+        registerModuleFunction('attacks', 'collect', collectAttacks);
+    }
+
+    if (typeof applyAttacks === 'function') {
+        registerModuleFunction('attacks', 'apply', applyAttacks);
+    }
+});
+
+/**
+ * Collects all character data from the sheet
+ * @returns {Object} Complete character data object
+ */
 function collectCharacterData() {
-    return {
-        portrait: typeof getPortraitData === 'function' ? getPortraitData() : null,
+    const data = {
+        portrait: moduleRegistry.portrait.get ? moduleRegistry.portrait.get() : null,
         basicInfo: collectBasicInfo(),
         abilities: collectAbilities(),
         combat: collectCombatStats(),
@@ -15,25 +72,37 @@ function collectCharacterData() {
         languages: collectLanguages(),
         proficiencies: collectProficiencies(),
         features: collectFeatures(),
-        // Llamamos a la función en spells.js en lugar de definirla aquí
-        spells: typeof collectSpells === 'function' ? collectSpells() : {},
+        spells: moduleRegistry.spells.collect ? moduleRegistry.spells.collect() : {},
         equipment: collectEquipment(),
-        attacks: typeof collectAttacks === 'function' ? collectAttacks() : [],
+        attacks: moduleRegistry.attacks.collect ? moduleRegistry.attacks.collect() : [],
         money: collectMoney(),
         personality: collectPersonality(),
-        notes: document.getElementById("notes").value
+        notes: safeGetElementValue("notes", "")
     };
+
+    // Save the character data to localStorage for recovery
+    try {
+        localStorage.setItem('lastCharacter', JSON.stringify(data));
+    } catch (error) {
+        console.warn('Failed to save character to localStorage:', error);
+    }
+
+    return data;
 }
 
-// Aplicar datos de personaje a la ficha
+/**
+ * Applies character data to the sheet
+ * @param {Object} data - Character data to apply
+ */
 function applyCharacterData(data) {
     if (!data) return;
 
-    // Aplicar la imagen del personaje si existe la función
-    if (data.portrait && typeof applyPortraitData === 'function')
-        applyPortraitData(data.portrait);
+    // Apply portrait if available
+    if (data.portrait && moduleRegistry.portrait.apply) {
+        moduleRegistry.portrait.apply(data.portrait);
+    }
 
-    // Aplicar cada sección de los datos
+    // Apply each section data
     if (data.basicInfo) applyBasicInfo(data.basicInfo);
     if (data.abilities) applyAbilities(data.abilities);
     if (data.combat) applyCombatStats(data.combat);
@@ -43,61 +112,114 @@ function applyCharacterData(data) {
     if (data.proficiencies) applyProficiencies(data.proficiencies);
     if (data.features) applyFeatures(data.features);
 
-    // Llamamos a la función en spells.js en lugar de definirla aquí
-    if (data.spells && typeof applySpells === 'function')
-        applySpells(data.spells);
+    // Apply spells if available
+    if (data.spells && moduleRegistry.spells.apply) {
+        moduleRegistry.spells.apply(data.spells);
+    }
 
+    // Apply equipment
     if (data.equipment) applyEquipment(data.equipment);
 
-    // Aplicar los ataques si existe la función
-    if (data.attacks && typeof applyAttacks === 'function')
-        applyAttacks(data.attacks);
+    // Apply attacks if available
+    if (data.attacks && moduleRegistry.attacks.apply) {
+        moduleRegistry.attacks.apply(data.attacks);
+    }
 
     if (data.money) applyMoney(data.money);
     if (data.personality) applyPersonality(data.personality);
-    if (data.notes !== undefined) document.getElementById("notes").value = data.notes;
 
-    // Actualizar todos los modificadores después de cargar los datos
+    // Apply notes
+    const notesElement = document.getElementById("notes");
+    if (notesElement && data.notes !== undefined) {
+        notesElement.value = data.notes;
+    }
+
+    // Update all calculated values
     updateAllModifiers();
 }
 
-// Recopilar información básica
+/**
+ * Safely gets the value of an element, with fallback
+ * @param {string} elementId - ID of the element
+ * @param {*} defaultValue - Default value if element doesn't exist
+ * @returns {*} Element value or default
+ */
+function safeGetElementValue(elementId, defaultValue = '') {
+    const element = document.getElementById(elementId);
+    if (!element) return defaultValue;
+
+    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        return element.value;
+    } else {
+        return element.textContent;
+    }
+}
+
+/**
+ * Safely sets the value of an element
+ * @param {string} elementId - ID of the element
+ * @param {*} value - Value to set
+ */
+function safeSetElementValue(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        element.value = value;
+    } else {
+        element.textContent = value;
+    }
+}
+
+/**
+ * Collects basic character information
+ * @returns {Object} Basic character info
+ */
 function collectBasicInfo() {
     return {
-        name: document.getElementById("character-name").value,
-        level: document.getElementById("level").textContent,
-        race: document.getElementById("race").value,
-        class: document.getElementById("class").value,
-        background: document.getElementById("background").value,
-        alignment: document.getElementById("alignment").value
+        name: safeGetElementValue("character-name"),
+        level: safeGetElementValue("level", "1"),
+        race: safeGetElementValue("race"),
+        class: safeGetElementValue("class"),
+        background: safeGetElementValue("background"),
+        alignment: safeGetElementValue("alignment")
     };
 }
 
-// Recopilar características
+/**
+ * Collects character abilities
+ * @returns {Object} Character abilities scores
+ */
 function collectAbilities() {
     const abilities = {};
     document.querySelectorAll(".ability").forEach((ability) => {
         const abilityType = ability.dataset.ability;
         const score = ability.querySelector(".ability-score").value;
-        abilities[abilityType] = parseInt(score);
+        abilities[abilityType] = parseInt(score) || 10;
     });
     return abilities;
 }
 
-// Recopilar estadísticas de combate
+/**
+ * Collects combat stats
+ * @returns {Object} Combat statistics
+ */
 function collectCombatStats() {
     return {
-        armorClass: document.getElementById("armor-class").value,
-        initiative: document.getElementById("initiative").value,
-        speed: document.getElementById("speed").value,
+        armorClass: safeGetElementValue("armor-class", "10"),
+        initiative: safeGetElementValue("initiative", "0"),
+        speed: safeGetElementValue("speed", "9m"),
         hp: {
-            current: document.getElementById("current-hp").value,
-            max: document.getElementById("max-hp").value
+            current: safeGetElementValue("current-hp", "10"),
+            max: safeGetElementValue("max-hp", "10")
         }
     };
 }
 
-// Recopilar tiradas de salvación
+/**
+ * Collects saving throw proficiencies
+ * @returns {Object} Saving throw proficiencies
+ */
 function collectSavingThrows() {
     const savingThrows = {};
     document.querySelectorAll("#saving-throws .skill-item").forEach((save) => {
@@ -108,7 +230,10 @@ function collectSavingThrows() {
     return savingThrows;
 }
 
-// Recopilar habilidades
+/**
+ * Collects skill proficiencies
+ * @returns {Object} Skill proficiencies
+ */
 function collectSkills() {
     const skills = {};
     document.querySelectorAll("#skills-list .skill-item").forEach((skill) => {
@@ -119,25 +244,36 @@ function collectSkills() {
     return skills;
 }
 
-// Recopilar idiomas
+/**
+ * Collects known languages
+ * @returns {Array} List of languages
+ */
 function collectLanguages() {
     const languages = [];
     document.querySelectorAll("#languages-list .tag").forEach((tag) => {
-        languages.push(tag.querySelector("span").textContent);
+        const langText = tag.querySelector("span").textContent;
+        if (langText) languages.push(langText);
     });
     return languages;
 }
 
-// Recopilar competencias
+/**
+ * Collects proficiencies
+ * @returns {Array} List of proficiencies
+ */
 function collectProficiencies() {
     const proficiencies = [];
     document.querySelectorAll("#proficiencies-list .tag").forEach((tag) => {
-        proficiencies.push(tag.querySelector("span").textContent);
+        const profText = tag.querySelector("span").textContent;
+        if (profText) proficiencies.push(profText);
     });
     return proficiencies;
 }
 
-// Recopilar rasgos y habilidades
+/**
+ * Collects character features
+ * @returns {Array} Character features
+ */
 function collectFeatures() {
     const features = [];
     document.querySelectorAll("#features-container .trait").forEach((feature) => {
@@ -163,156 +299,222 @@ function collectFeatures() {
     return features;
 }
 
-// Recopilar equipo
+/**
+ * Collects equipment
+ * @returns {Array} Equipment items
+ */
 function collectEquipment() {
     const equipment = [];
     document.querySelectorAll("#equipment-list .equipment-item").forEach((item) => {
-        equipment.push({
-            name: item.querySelector("span").textContent,
-            equipped: item.querySelector(".equipment-checkbox").checked
-        });
+        const nameSpan = item.querySelector("span");
+        const checkbox = item.querySelector(".equipment-checkbox");
+
+        if (nameSpan) {
+            equipment.push({
+                name: nameSpan.textContent,
+                equipped: checkbox ? checkbox.checked : false
+            });
+        }
     });
     return equipment;
 }
 
-// Recopilar monedas
+/**
+ * Collects money amounts
+ * @returns {Object} Money amounts
+ */
 function collectMoney() {
     return {
-        gold: document.getElementById("gold").value,
-        silver: document.getElementById("silver").value,
-        copper: document.getElementById("copper").value
+        gold: safeGetElementValue("gold", "0"),
+        silver: safeGetElementValue("silver", "0"),
+        copper: safeGetElementValue("copper", "0")
     };
 }
 
-// Recopilar rasgos de personalidad
+/**
+ * Collects personality traits
+ * @returns {Object} Personality traits
+ */
 function collectPersonality() {
     return {
-        traits: document.getElementById("personality-traits").value,
-        ideals: document.getElementById("ideals").value,
-        bonds: document.getElementById("bonds").value,
-        flaws: document.getElementById("flaws").value
+        traits: safeGetElementValue("personality-traits"),
+        ideals: safeGetElementValue("ideals"),
+        bonds: safeGetElementValue("bonds"),
+        flaws: safeGetElementValue("flaws")
     };
 }
 
-// Aplicar información básica
+/**
+ * Applies basic info to the character sheet
+ * @param {Object} basicInfo - Basic info to apply
+ */
 function applyBasicInfo(basicInfo) {
-    document.getElementById("character-name").value = basicInfo.name || "";
-    document.getElementById("level").textContent = basicInfo.level || "1";
-    document.getElementById("race").value = basicInfo.race || "";
-    document.getElementById("class").value = basicInfo.class || "";
-    document.getElementById("background").value = basicInfo.background || "";
-    document.getElementById("alignment").value = basicInfo.alignment || "";
+    if (!basicInfo) return;
+
+    safeSetElementValue("character-name", basicInfo.name || "");
+    safeSetElementValue("level", basicInfo.level || "1");
+    safeSetElementValue("race", basicInfo.race || "");
+    safeSetElementValue("class", basicInfo.class || "");
+    safeSetElementValue("background", basicInfo.background || "");
+    safeSetElementValue("alignment", basicInfo.alignment || "");
 }
 
-// Aplicar características
+/**
+ * Applies abilities to the character sheet
+ * @param {Object} abilities - Abilities to apply
+ */
 function applyAbilities(abilities) {
+    if (!abilities) return;
+
     for (const [ability, score] of Object.entries(abilities)) {
         const abilityEl = document.querySelector(`.ability[data-ability="${ability}"]`);
         if (abilityEl) {
-            abilityEl.querySelector(".ability-score").value = score;
-            updateAbilityMod(abilityEl.querySelector(".ability-score"));
+            const scoreInput = abilityEl.querySelector(".ability-score");
+            if (scoreInput) {
+                scoreInput.value = score;
+                updateAbilityMod(scoreInput);
+            }
         }
     }
 }
 
-// Aplicar estadísticas de combate
+/**
+ * Applies combat stats to the character sheet
+ * @param {Object} combat - Combat stats to apply
+ */
 function applyCombatStats(combat) {
-    document.getElementById("armor-class").value = combat.armorClass || "10";
-    document.getElementById("initiative").value = combat.initiative || "0";
-    document.getElementById("speed").value = combat.speed || "9m";
+    if (!combat) return;
+
+    safeSetElementValue("armor-class", combat.armorClass || "10");
+    safeSetElementValue("initiative", combat.initiative || "0");
+    safeSetElementValue("speed", combat.speed || "9m");
 
     if (combat.hp) {
-        document.getElementById("current-hp").value = combat.hp.current || "10";
-        document.getElementById("max-hp").value = combat.hp.max || "10";
+        safeSetElementValue("current-hp", combat.hp.current || "10");
+        safeSetElementValue("max-hp", combat.hp.max || "10");
     }
 }
 
-// Aplicar tiradas de salvación
+/**
+ * Applies saving throw proficiencies to the character sheet
+ * @param {Object} savingThrows - Saving throw proficiencies to apply
+ */
 function applySavingThrows(savingThrows) {
+    if (!savingThrows) return;
+
     for (const [save, isProficient] of Object.entries(savingThrows)) {
         const saveEl = document.querySelector(`#saving-throws .skill-item[data-skill="${save}"]`);
         if (saveEl) {
             const profEl = saveEl.querySelector(".proficient");
-            if (isProficient) {
-                profEl.classList.add("is-proficient");
-            } else {
-                profEl.classList.remove("is-proficient");
+            if (profEl) {
+                if (isProficient) {
+                    profEl.classList.add("is-proficient");
+                } else {
+                    profEl.classList.remove("is-proficient");
+                }
             }
         }
     }
 }
 
-// Aplicar habilidades
+/**
+ * Applies skill proficiencies to the character sheet
+ * @param {Object} skills - Skill proficiencies to apply
+ */
 function applySkills(skills) {
+    if (!skills) return;
+
     for (const [skill, isProficient] of Object.entries(skills)) {
         const skillEl = document.querySelector(`#skills-list .skill-item[data-skill="${skill}"]`);
         if (skillEl) {
             const profEl = skillEl.querySelector(".proficient");
-            if (isProficient) {
-                profEl.classList.add("is-proficient");
-            } else {
-                profEl.classList.remove("is-proficient");
+            if (profEl) {
+                if (isProficient) {
+                    profEl.classList.add("is-proficient");
+                } else {
+                    profEl.classList.remove("is-proficient");
+                }
             }
         }
     }
 }
 
-// Aplicar idiomas
+/**
+ * Creates a tag element for languages or proficiencies
+ * @param {string} text - Text content for the tag
+ * @returns {HTMLElement} Tag element
+ */
+function createTagElement(text) {
+    const tagEl = document.createElement("div");
+    tagEl.className = "tag";
+
+    tagEl.innerHTML = `
+      <span>${text}</span>
+      <button type="button" aria-label="Remove ${text}">✕</button>
+    `;
+
+    // Add click event to remove button
+    const removeBtn = tagEl.querySelector("button");
+    removeBtn.addEventListener("click", function () {
+        tagEl.remove();
+    });
+
+    return tagEl;
+}
+
+/**
+ * Applies languages to the character sheet
+ * @param {Array} languages - Languages to apply
+ */
 function applyLanguages(languages) {
-    if (languages.length > 0) {
-        const languagesList = document.getElementById("languages-list");
-        languagesList.innerHTML = "";
+    if (!languages || !languages.length) return;
 
-        languages.forEach((language) => {
-            const languageTag = document.createElement("div");
-            languageTag.className = "tag";
-            languageTag.style.backgroundColor = "#f0e0c0";
-            languageTag.style.padding = "4px 8px";
-            languageTag.style.borderRadius = "4px";
-            languageTag.style.display = "flex";
-            languageTag.style.alignItems = "center";
+    const languagesList = document.getElementById("languages-list");
+    if (!languagesList) return;
 
-            languageTag.innerHTML = `
-          <span>${language}</span>
-          <button onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 14px; margin-left: 5px; cursor: pointer; padding: 0;">✕</button>
-        `;
+    // Clear existing languages
+    languagesList.innerHTML = "";
 
-            languagesList.appendChild(languageTag);
-        });
-    }
+    // Add each language as a tag
+    languages.forEach(language => {
+        languagesList.appendChild(createTagElement(language));
+    });
 }
 
-// Aplicar competencias
+/**
+ * Applies proficiencies to the character sheet
+ * @param {Array} proficiencies - Proficiencies to apply
+ */
 function applyProficiencies(proficiencies) {
-    if (proficiencies.length > 0) {
-        const proficienciesList = document.getElementById("proficiencies-list");
-        proficienciesList.innerHTML = "";
+    if (!proficiencies || !proficiencies.length) return;
 
-        proficiencies.forEach((proficiency) => {
-            const proficiencyTag = document.createElement("div");
-            proficiencyTag.className = "tag";
-            proficiencyTag.style.backgroundColor = "#f0e0c0";
-            proficiencyTag.style.padding = "4px 8px";
-            proficiencyTag.style.borderRadius = "4px";
-            proficiencyTag.style.display = "flex";
-            proficiencyTag.style.alignItems = "center";
+    const proficienciesList = document.getElementById("proficiencies-list");
+    if (!proficienciesList) return;
 
-            proficiencyTag.innerHTML = `
-          <span>${proficiency}</span>
-          <button onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 14px; margin-left: 5px; cursor: pointer; padding: 0;">✕</button>
-        `;
+    // Clear existing proficiencies
+    proficienciesList.innerHTML = "";
 
-            proficienciesList.appendChild(proficiencyTag);
-        });
-    }
+    // Add each proficiency as a tag
+    proficiencies.forEach(proficiency => {
+        proficienciesList.appendChild(createTagElement(proficiency));
+    });
 }
 
-// Aplicar rasgos y habilidades
+/**
+ * Applies features to the character sheet
+ * @param {Array} features - Features to apply
+ */
 function applyFeatures(features) {
+    if (!features || !features.length) return;
+
     const featuresContainer = document.getElementById("features-container");
+    if (!featuresContainer) return;
+
+    // Clear existing features
     featuresContainer.innerHTML = "";
 
-    features.forEach((feature) => {
+    // Add each feature
+    features.forEach(feature => {
         const featureDiv = document.createElement("div");
         featureDiv.className = "trait";
 
@@ -323,11 +525,11 @@ function applyFeatures(features) {
             <div class="limited-use-item">
               <label><input type="checkbox" checked> Uso limitado</label>
               <div class="counter-container" style="margin-left: 10px;">
-                <button class="counter-button" onclick="adjustFeatureUses(this, -1)">-</button>
+                <button type="button" class="counter-button" aria-label="Decrease uses" onclick="adjustFeatureUses(this, -1)">-</button>
                 <span class="counter-value">${feature.uses.current}</span>
-                <button class="counter-button" onclick="adjustFeatureUses(this, 1)">+</button>
+                <button type="button" class="counter-button" aria-label="Increase uses" onclick="adjustFeatureUses(this, 1)">+</button>
                 <span> / </span>
-                <input type="number" value="${feature.uses.max}" style="width: 40px;">
+                <input type="number" value="${feature.uses.max}" min="1" aria-label="Maximum uses" style="width: 40px;">
               </div>
             </div>
           </div>
@@ -338,11 +540,11 @@ function applyFeatures(features) {
             <div class="limited-use-item">
               <label><input type="checkbox"> Uso limitado</label>
               <div class="counter-container" style="margin-left: 10px; display: none;">
-                <button class="counter-button" onclick="adjustFeatureUses(this, -1)">-</button>
+                <button type="button" class="counter-button" aria-label="Decrease uses" onclick="adjustFeatureUses(this, -1)">-</button>
                 <span class="counter-value">0</span>
-                <button class="counter-button" onclick="adjustFeatureUses(this, 1)">+</button>
+                <button type="button" class="counter-button" aria-label="Increase uses" onclick="adjustFeatureUses(this, 1)">+</button>
                 <span> / </span>
-                <input type="number" value="1" style="width: 40px;">
+                <input type="number" value="1" min="1" aria-label="Maximum uses" style="width: 40px;">
               </div>
             </div>
           </div>
@@ -351,16 +553,16 @@ function applyFeatures(features) {
 
         featureDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <input type="text" placeholder="Nombre del rasgo" style="width: auto; flex-grow: 1;" value="${feature.name || ''}">
-          <button onclick="this.parentElement.parentElement.remove()" style="margin-left: 10px;">✕</button>
+          <input type="text" placeholder="Nombre del rasgo" aria-label="Feature name" style="width: auto; flex-grow: 1;" value="${escapeHTML(feature.name || '')}">
+          <button type="button" aria-label="Remove feature" onclick="this.parentElement.parentElement.remove()" style="margin-left: 10px;">✕</button>
         </div>
-        <textarea placeholder="Descripción del rasgo" style="width: 100%; margin-top: 5px; min-height: 60px;">${feature.description || ''}</textarea>
+        <textarea placeholder="Descripción del rasgo" aria-label="Feature description" style="width: 100%; margin-top: 5px; min-height: 60px;">${escapeHTML(feature.description || '')}</textarea>
         ${usesHtml}
       `;
 
         featuresContainer.appendChild(featureDiv);
 
-        // Configurar el toggle para mostrar/ocultar contador de usos
+        // Configure the toggle for showing/hiding the use counter
         const checkbox = featureDiv.querySelector('input[type="checkbox"]');
         const counterContainer = featureDiv.querySelector(".counter-container");
 
@@ -370,60 +572,97 @@ function applyFeatures(features) {
     });
 }
 
-// Aplicar equipo
+/**
+ * Applies equipment to the character sheet
+ * @param {Array} equipment - Equipment to apply
+ */
 function applyEquipment(equipment) {
+    if (!equipment || !equipment.length) return;
+
     const equipmentList = document.getElementById("equipment-list");
+    if (!equipmentList) return;
+
+    // Clear existing equipment
     equipmentList.innerHTML = "";
 
-    equipment.forEach((item) => {
+    // Add each equipment item
+    equipment.forEach(item => {
         const equipmentItem = document.createElement("div");
         equipmentItem.className = "equipment-item";
         equipmentItem.innerHTML = `
-        <input type="checkbox" class="equipment-checkbox" ${item.equipped ? "checked" : ""}>
-        <span>${item.name || ''}</span>
-        <button onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
+        <input type="checkbox" class="equipment-checkbox" aria-label="Equipped ${item.name}" ${item.equipped ? "checked" : ""}>
+        <span>${escapeHTML(item.name || '')}</span>
+        <button type="button" aria-label="Remove item" onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
       `;
 
         equipmentList.appendChild(equipmentItem);
     });
 }
 
-// Aplicar monedas
+/**
+ * Applies money values to the character sheet
+ * @param {Object} money - Money values to apply
+ */
 function applyMoney(money) {
-    document.getElementById("gold").value = money.gold || "0";
-    document.getElementById("silver").value = money.silver || "0";
-    document.getElementById("copper").value = money.copper || "0";
+    if (!money) return;
+
+    safeSetElementValue("gold", money.gold || "0");
+    safeSetElementValue("silver", money.silver || "0");
+    safeSetElementValue("copper", money.copper || "0");
 }
 
-// Aplicar rasgos de personalidad
+/**
+ * Applies personality traits to the character sheet
+ * @param {Object} personality - Personality traits to apply
+ */
 function applyPersonality(personality) {
-    document.getElementById("personality-traits").value = personality.traits || "";
-    document.getElementById("ideals").value = personality.ideals || "";
-    document.getElementById("bonds").value = personality.bonds || "";
-    document.getElementById("flaws").value = personality.flaws || "";
+    if (!personality) return;
+
+    safeSetElementValue("personality-traits", personality.traits || "");
+    safeSetElementValue("ideals", personality.ideals || "");
+    safeSetElementValue("bonds", personality.bonds || "");
+    safeSetElementValue("flaws", personality.flaws || "");
 }
 
-// Exportar personaje a JSON
+/**
+ * Exports character data to a JSON file for download
+ */
 function exportCharacterToJson() {
-    const characterData = collectCharacterData();
-    const characterName = characterData.basicInfo.name || "personaje";
-    const characterClass = characterData.basicInfo.class || "clase";
-    const filename = `${characterName}-${characterClass}.json`;
+    try {
+        const characterData = collectCharacterData();
+        const characterName = characterData.basicInfo.name || "personaje";
+        const characterClass = characterData.basicInfo.class || "clase";
+        const filename = `${characterName}-${characterClass}.json`;
 
-    const jsonBlob = new Blob([JSON.stringify(characterData, null, 2)], {
-        type: "application/json",
-    });
-    const url = URL.createObjectURL(jsonBlob);
+        const jsonBlob = new Blob([JSON.stringify(characterData, null, 2)], {
+            type: "application/json",
+        });
+        const url = URL.createObjectURL(jsonBlob);
 
-    const downloadLink = document.createElement("a");
-    downloadLink.href = url;
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = url;
+        downloadLink.download = filename;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+        }, 100);
+
+        showNotification('Character saved successfully!');
+    } catch (error) {
+        console.error('Error exporting character:', error);
+        showNotification('Failed to save character. Please try again.', 'error');
+    }
 }
 
-// Importar personaje desde JSON
+/**
+ * Imports character data from a JSON file
+ * @param {Event} event - The change event from the file input
+ */
 function importCharacterFromJson(event) {
     const fileInput = event.target;
     const file = fileInput.files[0];
@@ -435,28 +674,52 @@ function importCharacterFromJson(event) {
         try {
             const characterData = JSON.parse(e.target.result);
             applyCharacterData(characterData);
+            showNotification('Character loaded successfully!');
         } catch (error) {
-            console.error("Error al importar el personaje:", error);
-            alert(
-                "Error al leer el archivo JSON. Asegúrate de que es un archivo válido."
-            );
+            console.error("Error importing character:", error);
+            showNotification('Error loading character. The file may be corrupted.', 'error');
         }
     };
 
+    reader.onerror = function () {
+        showNotification('Error reading file. Please try again.', 'error');
+    };
+
     reader.readAsText(file);
-    fileInput.value = ""; // Resetear para permitir cargar el mismo archivo varias veces
+    fileInput.value = ""; // Reset to allow loading the same file again
 }
 
-// Cargar datos del personaje inicial si se provee
-function loadInitialCharacterData(jsonData) {
-    try {
-        const characterData =
-            typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
-        applyCharacterData(characterData);
-    } catch (error) {
-        console.error(
-            "Error al cargar los datos iniciales del personaje:",
-            error
-        );
+/**
+ * Shows a notification to the user
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification (info/error)
+ */
+function showNotification(message, type = 'info') {
+    // Check if function exists in global scope
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+    } else {
+        // Fallback to alert for critical errors
+        if (type === 'error') {
+            alert(message);
+        } else {
+            console.log(message);
+        }
     }
+}
+
+/**
+ * Escapes HTML special characters
+ * @param {string} unsafe - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHTML(unsafe) {
+    if (typeof unsafe !== 'string') return '';
+
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }

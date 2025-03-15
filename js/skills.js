@@ -1,5 +1,20 @@
-// Lista de habilidades para cargar dinámicamente
-const skillsList = [
+/**
+ * Skills Module
+ * Handles character skills, ability modifiers, and proficiencies
+ */
+
+// Constants for ability names and abbreviations
+const ABILITY_ABBREVIATIONS = {
+    str: "FUE",
+    dex: "DES",
+    con: "CON",
+    int: "INT",
+    wis: "SAB",
+    cha: "CAR"
+};
+
+// Standard skills list with associated abilities
+const SKILLS_LIST = [
     { name: "Acrobacias", ability: "dex" },
     { name: "Manejo de Animales", ability: "wis" },
     { name: "Arcanos", ability: "int" },
@@ -20,132 +35,214 @@ const skillsList = [
     { name: "Supervivencia", ability: "wis" },
 ];
 
-// Obtener la abreviación de la característica
-function getAbilityAbbreviation(ability) {
-    const abbrevMap = {
-        str: "FUE",
-        dex: "DES",
-        con: "CON",
-        int: "INT",
-        wis: "SAB",
-        cha: "CAR",
-    };
+// Initialize module
+document.addEventListener('DOMContentLoaded', function () {
+    setupSkillsModule();
+});
 
-    return abbrevMap[ability] || ability.toUpperCase();
+/**
+ * Sets up the skills module
+ */
+function setupSkillsModule() {
+    // Generate skills list
+    generateSkillsList();
+
+    // Add event listeners for ability score changes
+    document.querySelectorAll(".ability-score").forEach(input => {
+        input.addEventListener("change", function () {
+            updateAbilityMod(this);
+        });
+
+        input.addEventListener("input", function () {
+            validateAbilityScore(this);
+        });
+    });
+
+    // Add event listener for character level changes
+    const levelElement = document.getElementById("level");
+    if (levelElement) {
+        const levelObserver = new MutationObserver(() => updateAllModifiers());
+        levelObserver.observe(levelElement, { childList: true, characterData: true, subtree: true });
+    }
 }
 
-// Generar la lista de habilidades dinámicamente
+/**
+ * Validates an ability score input
+ * @param {HTMLElement} inputElement - The ability score input
+ */
+function validateAbilityScore(inputElement) {
+    if (!inputElement) return;
+
+    // Ensure the value is a number between 1 and 30
+    let value = parseInt(inputElement.value) || 0;
+    value = Math.max(1, Math.min(30, value));
+    inputElement.value = value;
+}
+
+/**
+ * Gets the abbreviation for an ability
+ * @param {string} ability - Ability code
+ * @returns {string} Ability abbreviation
+ */
+function getAbilityAbbreviation(ability) {
+    return ABILITY_ABBREVIATIONS[ability] || ability.toUpperCase();
+}
+
+/**
+ * Generates the skills list in the UI
+ */
 function generateSkillsList() {
     const skillsContainer = document.getElementById("skills-list");
+    if (!skillsContainer) return;
+
+    // Clear existing skills
     skillsContainer.innerHTML = "";
 
-    skillsList.forEach((skill) => {
+    // Create skill items
+    SKILLS_LIST.forEach((skill) => {
         const abilityAbbrev = getAbilityAbbreviation(skill.ability);
+        const skillId = skill.name.toLowerCase().replace(/\s+/g, "-");
+
         const skillItem = document.createElement("div");
         skillItem.className = "skill-item";
-        skillItem.dataset.skill = skill.name
-            .toLowerCase()
-            .replace(/\s+/g, "-");
+        skillItem.dataset.skill = skillId;
+        skillItem.dataset.ability = skill.ability;
 
         skillItem.innerHTML = `
-            <div class="proficient" onclick="toggleProficiency(this)"></div>
-            <span>${skill.name} (${abilityAbbrev})</span>
-            <span class="skill-mod">+0</span>
-        `;
+        <div class="proficient" role="checkbox" aria-checked="false" tabindex="0" aria-label="Proficiency in ${skill.name}" onclick="toggleProficiency(this)" onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"></div>
+        <span>${skill.name} (${abilityAbbrev})</span>
+        <span class="skill-mod">+0</span>
+      `;
 
         skillsContainer.appendChild(skillItem);
     });
 
-    // Actualizar todos los modificadores
+    // Update all skill modifiers
     updateAllModifiers();
 }
 
-// Toggle para marcar/desmarcar competencias
+/**
+ * Toggles proficiency for a skill or saving throw
+ * @param {HTMLElement} element - The proficiency indicator element
+ */
 function toggleProficiency(element) {
+    if (!element) return;
+
+    const wasProficient = element.classList.contains("is-proficient");
     element.classList.toggle("is-proficient");
+
+    // Update ARIA attributes
+    element.setAttribute("aria-checked", !wasProficient);
+
+    // Update all modifiers to reflect the change
     updateAllModifiers();
 }
 
-// Actualizar el modificador de una característica
+/**
+ * Updates the modifier for an ability score
+ * @param {HTMLElement} inputElement - The ability score input
+ */
 function updateAbilityMod(inputElement) {
+    if (!inputElement) return;
+
     const score = parseInt(inputElement.value) || 0;
     const modifier = Math.floor((score - 10) / 2);
+
     const abilityEl = inputElement.closest(".ability");
+    if (!abilityEl) return;
+
     const modElement = abilityEl.querySelector(".ability-mod");
+    if (!modElement) return;
 
     modElement.textContent = modifier >= 0 ? `+${modifier}` : modifier;
 
-    // Actualizar todas las habilidades relacionadas
+    // Update all skills and saving throws related to this ability
     updateAllModifiers();
 }
 
-// Actualizar todos los modificadores de salvaciones y habilidades
+/**
+ * Updates all skill and saving throw modifiers
+ */
 function updateAllModifiers() {
-    // Obtener todos los modificadores de características
+    // Get ability modifiers
     const abilityMods = {};
     document.querySelectorAll(".ability").forEach((ability) => {
         const abilityType = ability.dataset.ability;
-        const modText = ability.querySelector(".ability-mod").textContent;
-        abilityMods[abilityType] = parseInt(modText.replace("+", ""));
+        const modText = ability.querySelector(".ability-mod")?.textContent || "+0";
+        abilityMods[abilityType] = parseInt(modText.replace("+", "")) || 0;
     });
 
-    // Actualizar salvaciones
-    document
-        .querySelectorAll("#saving-throws .skill-item")
-        .forEach((save) => {
-            const saveType = save.dataset.skill.split("-")[0];
-            const isProficient = save
-                .querySelector(".proficient")
-                .classList.contains("is-proficient");
-            const profBonus =
-                parseInt(document.getElementById("level").textContent) >= 5
-                    ? 3
-                    : 2;
+    // Get proficiency bonus based on character level
+    const level = parseInt(document.getElementById("level")?.textContent) || 1;
+    const profBonus = calculateProficiencyBonus(level);
 
-            let modValue = abilityMods[saveType] || 0;
-            if (isProficient) {
-                modValue += profBonus;
-            }
+    // Update saving throws
+    document.querySelectorAll("#saving-throws .skill-item").forEach((save) => {
+        updateModifier(save, abilityMods, profBonus);
+    });
 
-            save.querySelector(".skill-mod").textContent =
-                modValue >= 0 ? `+${modValue}` : modValue;
-        });
-
-    // Actualizar habilidades
-    skillsList.forEach((skill) => {
-        const skillEl = document.querySelector(
-            `[data-skill="${skill.name.toLowerCase().replace(/\s+/g, "-")}"]`
-        );
-        if (skillEl) {
-            const isProficient = skillEl
-                .querySelector(".proficient")
-                .classList.contains("is-proficient");
-            const profBonus =
-                parseInt(document.getElementById("level").textContent) >= 5
-                    ? 3
-                    : 2;
-
-            let modValue = abilityMods[skill.ability] || 0;
-            if (isProficient) {
-                modValue += profBonus;
-            }
-
-            skillEl.querySelector(".skill-mod").textContent =
-                modValue >= 0 ? `+${modValue}` : modValue;
-        }
+    // Update skills
+    document.querySelectorAll("#skills-list .skill-item").forEach((skill) => {
+        updateModifier(skill, abilityMods, profBonus);
     });
 }
 
-// Ajustar contadores (nivel, inspiraciones, etc.)
+/**
+ * Updates a single modifier element
+ * @param {HTMLElement} element - The skill or saving throw element
+ * @param {Object} abilityMods - Object with ability modifiers
+ * @param {number} profBonus - Proficiency bonus
+ */
+function updateModifier(element, abilityMods, profBonus) {
+    // Get the relevant ability
+    const ability = element.dataset.ability || element.dataset.skill?.split("-")[0];
+    if (!ability) return;
+
+    // Check if proficient
+    const isProficient = element.querySelector(".proficient")?.classList.contains("is-proficient") || false;
+
+    // Calculate the modifier
+    const baseModifier = abilityMods[ability] || 0;
+    const totalModifier = isProficient ? baseModifier + profBonus : baseModifier;
+
+    // Update the display
+    const modElement = element.querySelector(".skill-mod");
+    if (modElement) {
+        modElement.textContent = totalModifier >= 0 ? `+${totalModifier}` : totalModifier;
+    }
+}
+
+/**
+ * Calculates proficiency bonus based on character level
+ * @param {number} level - Character level
+ * @returns {number} Proficiency bonus
+ */
+function calculateProficiencyBonus(level) {
+    return Math.floor((level - 1) / 4) + 2;
+}
+
+/**
+ * Adjusts a counter (level, inspiration, etc.)
+ * @param {string} counterId - ID of the counter element
+ * @param {number} change - Amount to change the counter by
+ */
 function adjustCounter(counterId, change) {
     const counterElement = document.getElementById(counterId);
+    if (!counterElement) return;
+
     let currentValue = parseInt(counterElement.textContent) || 0;
+    let newValue = currentValue + change;
 
-    currentValue = Math.max(1, currentValue + change);
+    // Minimum value depends on counter
+    let minValue = 1;  // Default for level
 
-    counterElement.textContent = currentValue;
+    // Apply range limits
+    newValue = Math.max(minValue, newValue);
 
-    // Si es nivel, actualizar los modificadores que dependen de nivel
+    // Update the counter
+    counterElement.textContent = newValue;
+
+    // If this is the level counter, update all modifiers
     if (counterId === "level") {
         updateAllModifiers();
     }

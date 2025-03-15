@@ -1,14 +1,52 @@
 /**
- * Módulo de Hechizos
- * Maneja la creación, visualización y gestión de hechizos
+ * Spells Module
+ * Handles spell management, creation, and visualization
  */
 
-// Variable global para almacenar el hechizo que se está editando actualmente
-let currentEditingSpell = null;
+// Module state
+const spellsState = {
+    currentEditingSpell: null,
+    spellDatabase: {} // For future implementation of spell lookup functionality
+};
 
-// Añadir nuevo hechizo
+// Initialize the spells module
+document.addEventListener('DOMContentLoaded', function () {
+    setupSpellsEventHandlers();
+});
+
+/**
+ * Sets up event handlers for the spells section
+ */
+function setupSpellsEventHandlers() {
+    // Close spell modal on outside click
+    const spellModal = document.getElementById('spell-detail-modal');
+    if (spellModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === spellModal) {
+                closeSpellModal();
+            }
+        });
+    }
+
+    // Add key handler for Escape to close modal
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && spellModal && spellModal.style.display === 'block') {
+            closeSpellModal();
+        }
+    });
+}
+
+/**
+ * Adds a new spell to the character sheet
+ */
 function addSpell() {
     const spellName = document.getElementById("new-spell").value.trim();
+
+    if (!spellName) {
+        showNotification("Please enter a spell name", "error");
+        return;
+    }
+
     const spellLevel = document.getElementById("spell-level-select").value;
     const castTime = document.getElementById("new-spell-cast-time").value.trim();
     const range = document.getElementById("new-spell-range").value.trim();
@@ -17,75 +55,21 @@ function addSpell() {
     const school = document.getElementById("new-spell-school").value;
     const description = document.getElementById("new-spell-description").value.trim();
 
-    if (!spellName) {
-        alert("El hechizo debe tener un nombre");
-        return;
-    }
-
     const spellsContainer = document.getElementById("spells-container");
+    if (!spellsContainer) return;
 
-    // Verificar si ya existe el nivel de hechizo
+    // Get or create the spell level container
     let spellLevelContainer = document.querySelector(
         `.spell-level-container[data-level="${spellLevel}"]`
     );
 
-    // Si no existe, crear el contenedor para ese nivel
+    // If this level doesn't exist yet, create it
     if (!spellLevelContainer) {
-        spellLevelContainer = document.createElement("div");
-        spellLevelContainer.className = "spell-level-container";
-        spellLevelContainer.dataset.level = spellLevel;
-
-        let levelTitle = "";
-        let slotsHtml = "";
-
-        if (spellLevel === "cantrip") {
-            levelTitle = "Trucos (a voluntad)";
-        } else {
-            const levelNum = parseInt(spellLevel);
-            const numSlots = getDefaultSlots(levelNum);
-            levelTitle = `Nivel ${levelNum} (${numSlots} espacios)`;
-
-            slotsHtml = '<div class="spell-slots">';
-            for (let i = 0; i < numSlots; i++) {
-                slotsHtml +=
-                    '<div class="spell-slot" onclick="toggleSpellSlot(this)"></div>';
-            }
-            slotsHtml += "</div>";
-        }
-
-        spellLevelContainer.innerHTML = `
-      <div class="spell-level">${levelTitle}</div>
-      ${slotsHtml}
-      <div class="spell-items"></div>
-    `;
-
-        // Insertar en el orden correcto
-        let inserted = false;
-        const containers = document.querySelectorAll(
-            ".spell-level-container"
-        );
-
-        for (let container of containers) {
-            const currentLevel = container.dataset.level;
-
-            if (currentLevel === "cantrip") continue;
-
-            if (
-                spellLevel === "cantrip" ||
-                parseInt(spellLevel) < parseInt(currentLevel)
-            ) {
-                spellsContainer.insertBefore(spellLevelContainer, container);
-                inserted = true;
-                break;
-            }
-        }
-
-        if (!inserted) {
-            spellsContainer.appendChild(spellLevelContainer);
-        }
+        spellLevelContainer = createSpellLevelContainer(spellLevel);
+        insertSpellLevelInOrder(spellsContainer, spellLevelContainer);
     }
 
-    // Crear el objeto de datos del hechizo
+    // Create the spell data object
     const spellData = {
         name: spellName,
         level: spellLevel,
@@ -98,26 +82,154 @@ function addSpell() {
         prepared: false
     };
 
-    // Añadir el hechizo
-    const spellItemsContainer = spellLevelContainer.querySelector(".spell-items");
+    // Add the spell to the container
+    addSpellToContainer(spellLevelContainer, spellData);
+
+    // Clear the form
+    clearSpellForm();
+
+    // Show success notification
+    showNotification(`Added spell: ${spellName}`, "info");
+}
+
+/**
+ * Creates a container for a spell level
+ * @param {string} level - The spell level
+ * @returns {HTMLElement} The spell level container
+ */
+function createSpellLevelContainer(level) {
+    const container = document.createElement("div");
+    container.className = "spell-level-container";
+    container.dataset.level = level;
+
+    let levelTitle = "";
+    let slotsHtml = "";
+
+    if (level === "cantrip") {
+        levelTitle = "Trucos (a voluntad)";
+    } else {
+        const levelNum = parseInt(level);
+        const numSlots = getDefaultSlots(levelNum);
+        levelTitle = `Nivel ${levelNum} (${numSlots} espacios)`;
+
+        slotsHtml = '<div class="spell-slots">';
+        for (let i = 0; i < numSlots; i++) {
+            slotsHtml += '<div class="spell-slot" onclick="toggleSpellSlot(this)" role="button" tabindex="0" aria-label="Spell slot"></div>';
+        }
+        slotsHtml += "</div>";
+    }
+
+    container.innerHTML = `
+      <div class="spell-level">${levelTitle}</div>
+      ${slotsHtml}
+      <div class="spell-items"></div>
+    `;
+
+    return container;
+}
+
+/**
+ * Inserts a spell level container in the correct order
+ * @param {HTMLElement} parentContainer - The parent container for all spell levels
+ * @param {HTMLElement} newContainer - The new spell level container to insert
+ */
+function insertSpellLevelInOrder(parentContainer, newContainer) {
+    const level = newContainer.dataset.level;
+    let inserted = false;
+
+    // Get all existing containers
+    const containers = parentContainer.querySelectorAll(".spell-level-container");
+
+    // Insert in proper order (cantrips first, then numerically)
+    for (let container of containers) {
+        const currentLevel = container.dataset.level;
+
+        // Skip past cantrips
+        if (currentLevel === "cantrip") continue;
+
+        // If our new container is a cantrip or its level is lower than current, insert before
+        if (level === "cantrip" || (level !== "cantrip" && parseInt(level) < parseInt(currentLevel))) {
+            parentContainer.insertBefore(newContainer, container);
+            inserted = true;
+            break;
+        }
+    }
+
+    // If we didn't find a place to insert, append at the end
+    if (!inserted) {
+        parentContainer.appendChild(newContainer);
+    }
+}
+
+/**
+ * Adds a spell to its level container
+ * @param {HTMLElement} container - The spell level container
+ * @param {Object} spellData - The spell data object
+ */
+function addSpellToContainer(container, spellData) {
+    const spellItemsContainer = container.querySelector(".spell-items");
+    if (!spellItemsContainer) return;
+
     const spellItem = document.createElement("div");
     spellItem.className = "spell-item";
     spellItem.dataset.spell = JSON.stringify(spellData);
 
     spellItem.innerHTML = `
-    <input type="checkbox" class="spell-checkbox" onchange="toggleSpellPrepared(this)">
-    <span class="spell-name" onclick="showSpellDetails(this)">${spellName}</span>
-    <button class="spell-info-button" onclick="showSpellDetails(this.parentElement)" title="Ver detalles">ℹ️</button>
-    <button onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
-  `;
+      <input type="checkbox" class="spell-checkbox" aria-label="Prepare ${spellData.name}" onchange="toggleSpellPrepared(this)">
+      <span class="spell-name" role="button" tabindex="0" onclick="showSpellDetails(this)">${escapeHTML(spellData.name)}</span>
+      <button class="spell-info-button" onclick="showSpellDetails(this.parentElement)" title="Ver detalles" aria-label="View spell details">ℹ️</button>
+      <button onclick="removeSpell(this.parentElement)" aria-label="Remove spell" style="margin-left: auto; font-size: 10px;">✕</button>
+    `;
 
     spellItemsContainer.appendChild(spellItem);
-
-    // Limpiar los campos
-    clearSpellForm();
 }
 
-// Limpiar el formulario de hechizos
+/**
+ * Removes a spell from the character sheet
+ * @param {HTMLElement} spellElement - The spell element to remove
+ */
+function removeSpell(spellElement) {
+    if (!spellElement) return;
+
+    // Get the spell data for the notification
+    let spellName = "spell";
+    try {
+        const spellData = JSON.parse(spellElement.dataset.spell || "{}");
+        spellName = spellData.name || "spell";
+    } catch (e) {
+        console.error("Error parsing spell data:", e);
+    }
+
+    // Remove the spell element
+    spellElement.remove();
+
+    // Show notification
+    showNotification(`Removed spell: ${spellName}`, "info");
+
+    // Check if the level container is now empty and remove it if needed
+    cleanupEmptySpellLevels();
+}
+
+/**
+ * Removes empty spell level containers
+ */
+function cleanupEmptySpellLevels() {
+    const emptyContainers = document.querySelectorAll(".spell-level-container");
+
+    emptyContainers.forEach(container => {
+        const spellItems = container.querySelector(".spell-items");
+        if (spellItems && !spellItems.hasChildNodes()) {
+            // Only remove non-cantrip empty containers to avoid flickering
+            if (container.dataset.level !== "cantrip") {
+                container.remove();
+            }
+        }
+    });
+}
+
+/**
+ * Clears the spell form inputs
+ */
 function clearSpellForm() {
     document.getElementById("new-spell").value = "";
     document.getElementById("new-spell-cast-time").value = "";
@@ -127,125 +239,199 @@ function clearSpellForm() {
     document.getElementById("new-spell-description").value = "";
 }
 
-// Obtener el número por defecto de espacios de hechizo según el nivel
-function getDefaultSlots(level) {
+/**
+ * Gets the default number of spell slots based on character level
+ * @param {number} spellLevel - The spell level
+ * @returns {number} The number of slots
+ */
+function getDefaultSlots(spellLevel) {
     const charLevel = parseInt(document.getElementById("level").textContent) || 1;
 
-    // Simplificado para nivel 1-3 de personaje
-    switch (level) {
-        case 1:
-            return charLevel < 3 ? 2 : 4;
-        case 2:
-            return charLevel < 5 ? 0 : 2;
-        default:
-            return 0; // Niveles superiores
+    // Simplified table based on standard spell slot progression
+    const slotsByLevel = {
+        1: [2, 0, 0, 0, 0, 0, 0, 0, 0], // 1st level character
+        2: [3, 0, 0, 0, 0, 0, 0, 0, 0], // 2nd level character
+        3: [4, 2, 0, 0, 0, 0, 0, 0, 0], // 3rd level character
+        4: [4, 3, 0, 0, 0, 0, 0, 0, 0], // 4th level character
+        5: [4, 3, 2, 0, 0, 0, 0, 0, 0], // 5th level character
+        // Add more levels as needed
+    };
+
+    // Get slots for character level or use 1st level if not found
+    const slots = slotsByLevel[charLevel] || slotsByLevel[1];
+
+    // Spell level is 1-indexed in the array (level 1 spells at index 0)
+    return spellLevel <= slots.length ? slots[spellLevel - 1] : 0;
+}
+
+/**
+ * Toggles a spell slot between used and available
+ * @param {HTMLElement} element - The spell slot element
+ */
+function toggleSpellSlot(element) {
+    if (!element) return;
+    element.classList.toggle("used");
+    element.setAttribute("aria-checked", element.classList.contains("used"));
+}
+
+/**
+ * Toggles a spell's prepared status
+ * @param {HTMLElement} checkbox - The prepared checkbox
+ */
+function toggleSpellPrepared(checkbox) {
+    if (!checkbox) return;
+
+    const spellItem = checkbox.closest(".spell-item");
+    if (!spellItem) return;
+
+    try {
+        const spellData = JSON.parse(spellItem.dataset.spell || "{}");
+        spellData.prepared = checkbox.checked;
+        spellItem.dataset.spell = JSON.stringify(spellData);
+    } catch (e) {
+        console.error("Error updating spell prepared status:", e);
     }
 }
 
-// Toggle para marcar/desmarcar espacios de hechizos
-function toggleSpellSlot(element) {
-    element.classList.toggle("used");
-}
-
-// Toggle para marcar/desmarcar hechizos preparados
-function toggleSpellPrepared(checkbox) {
-    const spellItem = checkbox.closest(".spell-item");
-    const spellData = JSON.parse(spellItem.dataset.spell);
-
-    spellData.prepared = checkbox.checked;
-    spellItem.dataset.spell = JSON.stringify(spellData);
-}
-
-// Mostrar detalles del hechizo
+/**
+ * Shows the spell details in the modal
+ * @param {HTMLElement} element - The element that triggered the display
+ */
 function showSpellDetails(element) {
+    if (!element) return;
+
     const spellItem = element.closest(".spell-item");
-    const spellData = JSON.parse(spellItem.dataset.spell);
+    if (!spellItem) return;
 
-    // Guardar referencia al hechizo actual
-    currentEditingSpell = spellItem;
+    try {
+        const spellData = JSON.parse(spellItem.dataset.spell || "{}");
 
-    // Rellenar el modal con los datos del hechizo
-    document.getElementById("modal-spell-name").textContent = spellData.name;
-    document.getElementById("modal-spell-level").textContent =
-        spellData.level === "cantrip" ? "Truco" : `Nivel ${spellData.level}`;
-    document.getElementById("modal-spell-school").textContent = spellData.school || "Desconocida";
-    document.getElementById("modal-spell-time").textContent = spellData.castTime || "1 acción";
-    document.getElementById("modal-spell-range").textContent = spellData.range || "A ti mismo";
-    document.getElementById("modal-spell-duration").textContent = spellData.duration || "Instantáneo";
-    document.getElementById("modal-spell-components").textContent = spellData.components || "V, S";
-    document.getElementById("modal-spell-description").textContent = spellData.description || "Sin descripción.";
+        // Save reference to the current spell for editing
+        spellsState.currentEditingSpell = spellItem;
 
-    // Mostrar el modal
-    document.getElementById("spell-detail-modal").style.display = "block";
+        // Fill the modal with spell data
+        document.getElementById("modal-spell-name").textContent = spellData.name || "";
+        document.getElementById("modal-spell-level").textContent =
+            spellData.level === "cantrip" ? "Truco" : `Nivel ${spellData.level}`;
+        document.getElementById("modal-spell-school").textContent = spellData.school || "Desconocida";
+        document.getElementById("modal-spell-time").textContent = spellData.castTime || "1 acción";
+        document.getElementById("modal-spell-range").textContent = spellData.range || "A ti mismo";
+        document.getElementById("modal-spell-duration").textContent = spellData.duration || "Instantáneo";
+        document.getElementById("modal-spell-components").textContent = spellData.components || "V, S";
+        document.getElementById("modal-spell-description").textContent = spellData.description || "Sin descripción.";
+
+        // Show the modal
+        const modal = document.getElementById("spell-detail-modal");
+        if (modal) modal.style.display = "block";
+
+    } catch (e) {
+        console.error("Error showing spell details:", e);
+        showNotification("Error displaying spell details", "error");
+    }
 }
 
-// Cerrar el modal de detalles del hechizo
+/**
+ * Closes the spell detail modal
+ */
 function closeSpellModal() {
-    document.getElementById("spell-detail-modal").style.display = "none";
-    currentEditingSpell = null;
+    // Hide the modal
+    const modal = document.getElementById("spell-detail-modal");
+    if (modal) modal.style.display = "none";
+
+    // Clear the current spell reference
+    spellsState.currentEditingSpell = null;
 }
 
-// Editar hechizo en el modal
+/**
+ * Edits the current spell in the modal
+ */
 function editSpellInModal() {
-    if (!currentEditingSpell) return;
+    if (!spellsState.currentEditingSpell) return;
 
-    const spellData = JSON.parse(currentEditingSpell.dataset.spell);
+    try {
+        const spellData = JSON.parse(spellsState.currentEditingSpell.dataset.spell || "{}");
 
-    // Llenar el formulario con los datos del hechizo
-    document.getElementById("new-spell").value = spellData.name;
-    document.getElementById("spell-level-select").value = spellData.level;
-    document.getElementById("new-spell-cast-time").value = spellData.castTime || "";
-    document.getElementById("new-spell-range").value = spellData.range || "";
-    document.getElementById("new-spell-duration").value = spellData.duration || "";
-    document.getElementById("new-spell-components").value = spellData.components || "";
-    document.getElementById("new-spell-school").value = spellData.school || "Abjuración";
-    document.getElementById("new-spell-description").value = spellData.description || "";
+        // Fill the form with the spell data
+        document.getElementById("new-spell").value = spellData.name || "";
+        document.getElementById("spell-level-select").value = spellData.level || "cantrip";
+        document.getElementById("new-spell-cast-time").value = spellData.castTime || "";
+        document.getElementById("new-spell-range").value = spellData.range || "";
+        document.getElementById("new-spell-duration").value = spellData.duration || "";
+        document.getElementById("new-spell-components").value = spellData.components || "";
+        document.getElementById("new-spell-school").value = spellData.school || "Abjuración";
+        document.getElementById("new-spell-description").value = spellData.description || "";
 
-    // Eliminar el hechizo actual
-    currentEditingSpell.remove();
-    currentEditingSpell = null;
+        // Delete the spell
+        spellsState.currentEditingSpell.remove();
+        cleanupEmptySpellLevels();
 
-    // Cerrar el modal
-    closeSpellModal();
+        // Clear the reference
+        spellsState.currentEditingSpell = null;
 
-    // Hacer scroll hasta el formulario
-    document.querySelector(".spell-add").scrollIntoView({ behavior: 'smooth' });
+        // Close the modal
+        closeSpellModal();
+
+        // Scroll to the form
+        const spellAddForm = document.querySelector(".spell-add");
+        if (spellAddForm) {
+            spellAddForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+    } catch (e) {
+        console.error("Error editing spell:", e);
+        showNotification("Error editing spell", "error");
+    }
 }
 
-// Buscar hechizo en la base de datos (función de placeholder)
+/**
+ * Placeholder for spell database search
+ */
 function searchSpellDatabase() {
-    alert("Esta función permitiría buscar hechizos en una base de datos predefinida. Por ahora, puedes ingresar manualmente los datos del hechizo.");
+    // In a future implementation, this would connect to a spells API or database
+    showNotification("Spell database search will be implemented in a future version.", "info");
 }
 
-// Recopilar datos de hechizos para guardar
+/**
+ * Collects all spell data from the character sheet
+ * @returns {Object} Organized spell data
+ */
 function collectSpells() {
     const spells = {};
+
     document.querySelectorAll(".spell-level-container").forEach((container) => {
         const level = container.dataset.level;
         const spellItems = [];
 
+        // Collect spell items
         container.querySelectorAll(".spell-item").forEach((item) => {
-            // Obtener los datos completos del hechizo
-            const spellData = JSON.parse(item.dataset.spell);
+            try {
+                // Get the complete spell data
+                const spellData = JSON.parse(item.dataset.spell || "{}");
 
-            // Asegurarse de que el estado de preparado está actualizado
-            spellData.prepared = item.querySelector(".spell-checkbox").checked;
+                // Update prepared status
+                const preparedCheckbox = item.querySelector(".spell-checkbox");
+                if (preparedCheckbox) {
+                    spellData.prepared = preparedCheckbox.checked;
+                }
 
-            // Añadir el hechizo a la lista
-            spellItems.push(spellData);
+                // Add to collection
+                spellItems.push(spellData);
+            } catch (e) {
+                console.error("Error collecting spell data:", e);
+            }
         });
 
-        // Obtener información de espacios de hechizo
+        // Collect spell slot usage
         let slots = null;
         if (level !== "cantrip") {
             const slotElements = container.querySelectorAll(".spell-slot");
             slots = {
                 total: slotElements.length,
-                used: [...slotElements].filter((slot) => slot.classList.contains("used")).length
+                used: [...slotElements].filter(slot => slot.classList.contains("used")).length
             };
         }
 
-        // Guardar la información del nivel
+        // Store level data
         spells[level] = {
             spells: spellItems,
             slots: slots
@@ -255,87 +441,86 @@ function collectSpells() {
     return spells;
 }
 
-// Aplicar datos de hechizos guardados
+/**
+ * Applies spell data to the character sheet
+ * @param {Object} spellsData - The organized spell data
+ */
 function applySpells(spellsData) {
     if (!spellsData) return;
 
     const spellsContainer = document.getElementById("spells-container");
+    if (!spellsContainer) return;
+
+    // Clear existing spells
     spellsContainer.innerHTML = "";
 
-    // Ordenar los niveles para que aparezcan en orden correcto
+    // Sort levels for proper order (cantrips first, then numerical)
     const orderedLevels = Object.keys(spellsData).sort((a, b) => {
         if (a === "cantrip") return -1;
         if (b === "cantrip") return 1;
         return parseInt(a) - parseInt(b);
     });
 
-    // Procesar cada nivel de hechizo
+    // Add each level of spells
     orderedLevels.forEach(level => {
         const spellData = spellsData[level];
 
-        // Crear el contenedor para este nivel
-        const spellLevelContainer = document.createElement("div");
-        spellLevelContainer.className = "spell-level-container";
-        spellLevelContainer.dataset.level = level;
+        // Only create containers for levels with spells
+        if (spellData.spells && spellData.spells.length > 0) {
+            // Create level container
+            const spellLevelContainer = createSpellLevelContainer(level);
 
-        let levelTitle = "";
-        let slotsHtml = "";
-
-        // Configurar título y espacios según nivel
-        if (level === "cantrip") {
-            levelTitle = "Trucos (a voluntad)";
-        } else {
-            const levelNum = parseInt(level);
-            const slots = spellData.slots || { total: 0, used: 0 };
-            levelTitle = `Nivel ${levelNum} (${slots.total} espacios)`;
-
-            // Crear slots de hechizos
-            slotsHtml = '<div class="spell-slots">';
-            for (let i = 0; i < slots.total; i++) {
-                const usedClass = i < slots.used ? "used" : "";
-                slotsHtml += `<div class="spell-slot ${usedClass}" onclick="toggleSpellSlot(this)"></div>`;
+            // Set up spell slots if they exist
+            if (level !== "cantrip" && spellData.slots) {
+                const slotElements = spellLevelContainer.querySelectorAll(".spell-slot");
+                for (let i = 0; i < Math.min(slotElements.length, spellData.slots.used); i++) {
+                    slotElements[i].classList.add("used");
+                    slotElements[i].setAttribute("aria-checked", "true");
+                }
             }
-            slotsHtml += "</div>";
+
+            // Add each spell
+            spellData.spells.forEach(spell => {
+                addSpellToContainer(spellLevelContainer, spell);
+            });
+
+            // Add the container to the DOM
+            spellsContainer.appendChild(spellLevelContainer);
         }
-
-        // Crear el HTML para los hechizos de este nivel
-        let spellItemsHtml = '<div class="spell-items">';
-
-        // Añadir cada hechizo
-        spellData.spells.forEach(spell => {
-            const spellItem = document.createElement("div");
-            spellItem.className = "spell-item";
-            spellItem.dataset.spell = JSON.stringify(spell);
-
-            spellItem.innerHTML = `
-        <input type="checkbox" class="spell-checkbox" onchange="toggleSpellPrepared(this)" ${spell.prepared ? "checked" : ""}>
-        <span class="spell-name" onclick="showSpellDetails(this)">${spell.name}</span>
-        <button class="spell-info-button" onclick="showSpellDetails(this.parentElement)" title="Ver detalles">ℹ️</button>
-        <button onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
-      `;
-
-            spellItemsHtml += spellItem.outerHTML;
-        });
-
-        spellItemsHtml += '</div>';
-
-        // Construir el contenedor completo
-        spellLevelContainer.innerHTML = `
-      <div class="spell-level">${levelTitle}</div>
-      ${slotsHtml}
-      ${spellItemsHtml}
-    `;
-
-        // Añadir el contenedor al DOM
-        spellsContainer.appendChild(spellLevelContainer);
     });
+}
 
-    // Asegurarse de que los eventos están asociados correctamente
-    document.querySelectorAll(".spell-checkbox").forEach(checkbox => {
-        checkbox.onchange = function () { toggleSpellPrepared(this); };
-    });
+/**
+ * Escapes HTML to prevent XSS
+ * @param {string} unsafe - Unsafe string
+ * @returns {string} Escaped string
+ */
+function escapeHTML(unsafe) {
+    if (typeof unsafe !== 'string') return '';
 
-    document.querySelectorAll(".spell-name").forEach(name => {
-        name.onclick = function () { showSpellDetails(this); };
-    });
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/**
+ * Shows a notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification
+ */
+function showNotification(message, type = 'info') {
+    // Use global function if available
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+    } else {
+        // Fallback for critical errors
+        if (type === 'error') {
+            alert(message);
+        } else {
+            console.log(message);
+        }
+    }
 }

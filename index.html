@@ -4,17 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ficha de Personaje D&D 5e</title>
-    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="icon" type="image/png" href="./images/d20-icon.png" />
+    <meta
+      name="description"
+      content="Hoja de personaje interactiva para D&D 5ª Edición"
+    />
   </head>
   <body>
     <div class="main-container">
-      <!-- Contenedor para la imagen del personaje (nuevo) -->
+      <!-- Character portrait container -->
       <div class="character-portrait-container">
         <div class="character-portrait-sticky">
           <div class="character-portrait">
             <img
               id="character-image"
-              src="images/default-character.png"
+              src="./images/default-character.png"
               alt="Imagen del personaje"
             />
             <div class="portrait-controls">
@@ -25,20 +30,21 @@
                 type="file"
                 id="upload-portrait"
                 accept="image/*"
-                style="display: none"
+                class="file-input"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Contenedor para el contenido principal -->
+      <!-- Main content container -->
       <div class="main-content">
         <div class="header">
           <h1>D&D 5ª Edición</h1>
           <p class="character-title">Ficha de Personaje</p>
         </div>
 
+        <!-- Basic Information Section -->
         <div class="section">
           <h2>Información Básica</h2>
           <div class="basic-info">
@@ -48,20 +54,27 @@
                 type="text"
                 id="character-name"
                 placeholder="Nombre de tu personaje"
+                aria-label="Nombre del personaje"
               />
             </div>
             <div class="info-item">
-              <label>Nivel:</label>
+              <label for="level">Nivel:</label>
               <div class="counter-container">
                 <button
+                  type="button"
                   class="counter-button"
+                  aria-label="Disminuir nivel"
                   onclick="adjustCounter('level', -1)"
                 >
                   -
                 </button>
-                <span id="level" class="counter-value">1</span>
+                <span id="level" class="counter-value" aria-live="polite"
+                  >1</span
+                >
                 <button
+                  type="button"
                   class="counter-button"
+                  aria-label="Aumentar nivel"
                   onclick="adjustCounter('level', 1)"
                 >
                   +
@@ -69,24 +82,45 @@
               </div>
             </div>
             <div class="info-item">
-              <label>Raza:</label>
-              <input type="text" id="race" placeholder="Raza" />
+              <label for="race">Raza:</label>
+              <input
+                type="text"
+                id="race"
+                placeholder="Raza"
+                aria-label="Raza del personaje"
+              />
             </div>
             <div class="info-item">
-              <label>Clase:</label>
-              <input type="text" id="class" placeholder="Clase" />
+              <label for="class">Clase:</label>
+              <input
+                type="text"
+                id="class"
+                placeholder="Clase"
+                aria-label="Clase del personaje"
+              />
             </div>
             <div class="info-item">
-              <label>Trasfondo:</label>
-              <input type="text" id="background" placeholder="Trasfondo" />
+              <label for="background">Trasfondo:</label>
+              <input
+                type="text"
+                id="background"
+                placeholder="Trasfondo"
+                aria-label="Trasfondo del personaje"
+              />
             </div>
             <div class="info-item">
-              <label>Alineamiento:</label>
-              <input type="text" id="alignment" placeholder="Alineamiento" />
+              <label for="alignment">Alineamiento:</label>
+              <input
+                type="text"
+                id="alignment"
+                placeholder="Alineamiento"
+                aria-label="Alineamiento del personaje"
+              />
             </div>
           </div>
         </div>
 
+        <!-- Abilities Section -->
         <div class="section">
           <h2>Características</h2>
           <div class="abilities">
@@ -96,9 +130,12 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Fuerza"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
             <div class="ability" data-ability="dex">
               <div class="ability-name">DESTREZA</div>
@@ -106,9 +143,12 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Destreza"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
             <div class="ability" data-ability="con">
               <div class="ability-name">CONSTITUCIÓN</div>
@@ -116,9 +156,12 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Constitución"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
             <div class="ability" data-ability="int">
               <div class="ability-name">INTELIGENCIA</div>
@@ -126,9 +169,12 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Inteligencia"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
             <div class="ability" data-ability="wis">
               <div class="ability-name">SABIDURÍA</div>
@@ -136,9 +182,12 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Sabiduría"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
             <div class="ability" data-ability="cha">
               <div class="ability-name">CARISMA</div>
@@ -146,13 +195,17 @@
                 type="number"
                 class="ability-score"
                 value="10"
+                min="1"
+                max="30"
+                aria-label="Puntuación de Carisma"
                 onchange="updateAbilityMod(this)"
               />
-              <div class="ability-mod">+0</div>
+              <div class="ability-mod" aria-live="polite">+0</div>
             </div>
           </div>
         </div>
 
+        <!-- Combat Stats Section -->
         <div class="section">
           <h2>Estadísticas de Combate</h2>
           <div class="combat-stats">
@@ -163,6 +216,8 @@
                 id="armor-class"
                 class="combat-stat-value"
                 value="10"
+                min="0"
+                aria-label="Clase de Armadura"
               />
             </div>
             <div class="combat-stat">
@@ -172,6 +227,7 @@
                 id="initiative"
                 class="combat-stat-value"
                 value="0"
+                aria-label="Iniciativa"
               />
             </div>
             <div class="combat-stat">
@@ -181,6 +237,7 @@
                 id="speed"
                 class="combat-stat-value"
                 value="9m"
+                aria-label="Velocidad"
               />
             </div>
             <div class="combat-stat">
@@ -191,6 +248,8 @@
                   id="current-hp"
                   class="hp-current"
                   value="10"
+                  min="0"
+                  aria-label="Puntos de vida actuales"
                 />
                 /
                 <input
@@ -198,6 +257,8 @@
                   id="max-hp"
                   class="hp-current"
                   value="10"
+                  min="1"
+                  aria-label="Puntos de vida máximos"
                 />
               </div>
             </div>
@@ -206,59 +267,104 @@
           <h3>Tiradas de Salvación</h3>
           <div class="skills" id="saving-throws">
             <div class="skill-item" data-skill="str-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Fuerza</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
             <div class="skill-item" data-skill="dex-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Destreza</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
             <div class="skill-item" data-skill="con-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Constitución</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
             <div class="skill-item" data-skill="int-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Inteligencia</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
             <div class="skill-item" data-skill="wis-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Sabiduría</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
             <div class="skill-item" data-skill="cha-save">
-              <div class="proficient" onclick="toggleProficiency(this)"></div>
+              <div
+                class="proficient"
+                role="checkbox"
+                aria-checked="false"
+                tabindex="0"
+                onclick="toggleProficiency(this)"
+                onkeypress="if(event.key==='Enter'||event.key===' ')toggleProficiency(this)"
+              ></div>
               <span>Carisma</span>
-              <span class="skill-mod">+0</span>
+              <span class="skill-mod" aria-live="polite">+0</span>
             </div>
           </div>
         </div>
 
+        <!-- Skills Section -->
         <div class="section">
           <h2>Pericias</h2>
           <div class="skills" id="skills-list">
-            <!-- Pericias se cargarán desde el JSON -->
+            <!-- Skills will be loaded from JS -->
           </div>
         </div>
 
+        <!-- Features Section -->
         <div class="section">
           <h2>Rasgos y Habilidades</h2>
           <div id="features-container">
-            <!-- Rasgos se cargarán desde el JSON -->
+            <!-- Features will be loaded from JS -->
           </div>
-          <button onclick="addFeature()" style="margin-top: 10px">
+          <button type="button" onclick="addFeature()" style="margin-top: 10px">
             Añadir Rasgo
           </button>
         </div>
 
+        <!-- Spells Section -->
         <div class="section">
           <h2>Hechizos</h2>
           <div id="spells-container">
-            <!-- Hechizos se cargarán desde el JSON -->
+            <!-- Spells will be loaded from JS -->
           </div>
 
           <div class="spell-add" style="margin-top: 15px">
@@ -267,8 +373,9 @@
                 type="text"
                 id="new-spell"
                 placeholder="Añadir nuevo hechizo"
+                aria-label="Nombre del hechizo"
               />
-              <select id="spell-level-select">
+              <select id="spell-level-select" aria-label="Nivel del hechizo">
                 <option value="cantrip">Truco</option>
                 <option value="1">Nivel 1</option>
                 <option value="2">Nivel 2</option>
@@ -287,12 +394,19 @@
                 type="text"
                 id="new-spell-cast-time"
                 placeholder="Tiempo de lanzamiento"
+                aria-label="Tiempo de lanzamiento"
               />
-              <input type="text" id="new-spell-range" placeholder="Alcance" />
+              <input
+                type="text"
+                id="new-spell-range"
+                placeholder="Alcance"
+                aria-label="Alcance del hechizo"
+              />
               <input
                 type="text"
                 id="new-spell-duration"
                 placeholder="Duración"
+                aria-label="Duración del hechizo"
               />
             </div>
 
@@ -301,8 +415,9 @@
                 type="text"
                 id="new-spell-components"
                 placeholder="Componentes (V, S, M)"
+                aria-label="Componentes del hechizo"
               />
-              <select id="new-spell-school">
+              <select id="new-spell-school" aria-label="Escuela de magia">
                 <option value="Abjuración">Abjuración</option>
                 <option value="Adivinación">Adivinación</option>
                 <option value="Conjuración">Conjuración</option>
@@ -318,20 +433,34 @@
               id="new-spell-description"
               placeholder="Descripción del hechizo"
               rows="4"
+              aria-label="Descripción del hechizo"
             ></textarea>
 
             <div class="spell-add-buttons">
-              <button onclick="addSpell()">Añadir Hechizo</button>
-              <button onclick="searchSpellDatabase()" class="secondary-button">
+              <button type="button" onclick="addSpell()">Añadir Hechizo</button>
+              <button
+                type="button"
+                onclick="searchSpellDatabase()"
+                class="secondary-button"
+              >
                 Buscar Hechizo
               </button>
             </div>
           </div>
 
-          <!-- Modal para mostrar detalles del hechizo -->
-          <div id="spell-detail-modal" class="modal">
+          <!-- Spell Detail Modal -->
+          <div
+            id="spell-detail-modal"
+            class="modal"
+            role="dialog"
+            aria-labelledby="modal-spell-name"
+            aria-hidden="true"
+          >
             <div class="modal-content">
-              <span class="close-button" onclick="closeSpellModal()"
+              <span
+                class="close-button"
+                onclick="closeSpellModal()"
+                aria-label="Cerrar"
                 >&times;</span
               >
               <h3 id="modal-spell-name">Nombre del Hechizo</h3>
@@ -365,12 +494,22 @@
                 <p id="modal-spell-description">Descripción del hechizo.</p>
               </div>
               <div class="modal-buttons">
-                <button onclick="editSpellInModal()">Editar</button>
+                <button type="button" onclick="editSpellInModal()">
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  onclick="closeSpellModal()"
+                  class="secondary-button"
+                >
+                  Cerrar
+                </button>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Attacks Section -->
         <div class="section">
           <h2>Ataques y Armas</h2>
           <div class="attacks-header">
@@ -383,23 +522,30 @@
             <div class="attack-col-actions"></div>
           </div>
           <div id="attacks-list">
-            <!-- Las armas se cargarán desde el JSON -->
+            <!-- Attacks will be loaded from JS -->
           </div>
           <div class="attack-add">
-            <input type="text" id="new-attack-name" placeholder="Nombre" />
+            <input
+              type="text"
+              id="new-attack-name"
+              placeholder="Nombre"
+              aria-label="Nombre del ataque"
+            />
             <input
               type="text"
               id="new-attack-bonus"
               placeholder="+0"
               style="width: 60px"
+              aria-label="Bonificador de ataque"
             />
             <input
               type="text"
               id="new-attack-damage"
               placeholder="1d8"
               style="width: 80px"
+              aria-label="Daño del ataque"
             />
-            <select id="new-attack-type">
+            <select id="new-attack-type" aria-label="Tipo de daño">
               <option value="cortante">Cortante</option>
               <option value="perforante">Perforante</option>
               <option value="contundente">Contundente</option>
@@ -419,21 +565,24 @@
               id="new-attack-range"
               placeholder="Alcance"
               style="width: 80px"
+              aria-label="Alcance del ataque"
             />
             <input
               type="text"
               id="new-attack-properties"
               placeholder="Propiedades"
+              aria-label="Propiedades del arma"
             />
-            <button onclick="addAttack()">Añadir</button>
+            <button type="button" onclick="addAttack()">Añadir</button>
           </div>
         </div>
 
+        <!-- Languages & Proficiencies Section -->
         <div class="section">
           <h2>Idiomas y Competencias</h2>
           <div>
             <div class="info-item">
-              <label>Idiomas:</label>
+              <label for="languages-list">Idiomas:</label>
               <div id="languages-container" style="margin-top: 5px">
                 <div
                   id="languages-list"
@@ -444,7 +593,7 @@
                     gap: 5px;
                   "
                 >
-                  <!-- Los idiomas se cargarán desde el JSON -->
+                  <!-- Languages will be loaded from JS -->
                 </div>
                 <div style="display: flex; gap: 5px; margin-bottom: 10px">
                   <input
@@ -452,14 +601,15 @@
                     id="new-language"
                     placeholder="Añadir idioma..."
                     style="flex-grow: 1"
+                    aria-label="Nuevo idioma"
                   />
-                  <button onclick="addLanguage()">Añadir</button>
+                  <button type="button" onclick="addLanguage()">Añadir</button>
                 </div>
               </div>
             </div>
 
             <div class="info-item" style="margin-top: 15px">
-              <label>Otras Competencias:</label>
+              <label for="proficiencies-list">Otras Competencias:</label>
               <div id="proficiencies-container" style="margin-top: 5px">
                 <div
                   id="proficiencies-list"
@@ -470,7 +620,7 @@
                     gap: 5px;
                   "
                 >
-                  <!-- Las competencias se cargarán desde el JSON -->
+                  <!-- Proficiencies will be loaded from JS -->
                 </div>
                 <div style="display: flex; gap: 5px">
                   <input
@@ -478,18 +628,22 @@
                     id="new-proficiency"
                     placeholder="Añadir competencia..."
                     style="flex-grow: 1"
+                    aria-label="Nueva competencia"
                   />
-                  <button onclick="addProficiency()">Añadir</button>
+                  <button type="button" onclick="addProficiency()">
+                    Añadir
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Equipment Section -->
         <div class="section">
           <h2>Equipo</h2>
           <div id="equipment-list" class="equipment-list">
-            <!-- Equipo se cargará desde el JSON -->
+            <!-- Equipment will be loaded from JS -->
           </div>
 
           <div class="equipment-item" style="margin-top: 10px">
@@ -498,21 +652,27 @@
               type="number"
               id="gold"
               value="0"
+              min="0"
               style="width: 60px; margin: 0 5px"
+              aria-label="Piezas de oro"
             />
             po
             <input
               type="number"
               id="silver"
               value="0"
+              min="0"
               style="width: 60px; margin: 0 5px"
+              aria-label="Piezas de plata"
             />
             pp
             <input
               type="number"
               id="copper"
               value="0"
+              min="0"
               style="width: 60px; margin: 0 5px"
+              aria-label="Piezas de cobre"
             />
             pc
           </div>
@@ -522,11 +682,13 @@
               type="text"
               id="new-equipment"
               placeholder="Añadir nuevo equipo"
+              aria-label="Nuevo objeto"
             />
-            <button onclick="addEquipment()">Añadir</button>
+            <button type="button" onclick="addEquipment()">Añadir</button>
           </div>
         </div>
 
+        <!-- Personality Traits Section -->
         <div class="section">
           <h2>Rasgos de Personalidad</h2>
           <div class="traits-section">
@@ -537,6 +699,7 @@
                   id="personality-traits"
                   class="notes-box"
                   placeholder="Describe la personalidad de tu personaje"
+                  aria-label="Rasgos de personalidad"
                 ></textarea>
               </div>
 
@@ -546,6 +709,7 @@
                   id="ideals"
                   class="notes-box"
                   placeholder="¿Cuáles son los ideales de tu personaje?"
+                  aria-label="Ideales del personaje"
                 ></textarea>
               </div>
             </div>
@@ -557,6 +721,7 @@
                   id="bonds"
                   class="notes-box"
                   placeholder="¿Qué vínculos tiene tu personaje?"
+                  aria-label="Vínculos del personaje"
                 ></textarea>
               </div>
 
@@ -566,12 +731,14 @@
                   id="flaws"
                   class="notes-box"
                   placeholder="¿Cuáles son los defectos de tu personaje?"
+                  aria-label="Defectos del personaje"
                 ></textarea>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Notes Section -->
         <div class="section">
           <h2>Notas</h2>
           <textarea
@@ -579,13 +746,19 @@
             class="notes-box"
             style="width: 100%"
             placeholder="Notas adicionales de tu personaje y aventuras"
+            aria-label="Notas"
           ></textarea>
         </div>
 
+        <!-- Character Save/Load Section -->
         <div class="section">
           <h2>Cargar/Guardar Personaje</h2>
           <div style="display: flex; gap: 10px; margin-bottom: 10px">
-            <button onclick="exportCharacterToJson()" style="flex: 1">
+            <button
+              type="button"
+              onclick="exportCharacterToJson()"
+              style="flex: 1"
+            >
               Guardar como JSON
             </button>
             <input
@@ -593,8 +766,10 @@
               id="import-json"
               class="file-input"
               accept=".json"
+              aria-label="Importar personaje desde archivo JSON"
             />
             <button
+              type="button"
               onclick="document.getElementById('import-json').click()"
               style="flex: 1"
             >
@@ -603,17 +778,67 @@
           </div>
         </div>
 
+        <!-- Dice Roller Section -->
         <div class="section" id="dice-roller-section">
           <h2>Tirador de Dados</h2>
           <div class="dice-container">
             <div class="dice-options">
-              <button onclick="rollDie(4)" class="dice-button">d4</button>
-              <button onclick="rollDie(6)" class="dice-button">d6</button>
-              <button onclick="rollDie(8)" class="dice-button">d8</button>
-              <button onclick="rollDie(10)" class="dice-button">d10</button>
-              <button onclick="rollDie(12)" class="dice-button">d12</button>
-              <button onclick="rollDie(20)" class="dice-button">d20</button>
-              <button onclick="rollDie(100)" class="dice-button">d100</button>
+              <button
+                type="button"
+                onclick="rollDie(4)"
+                class="dice-button"
+                aria-label="Tirar d4"
+              >
+                d4
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(6)"
+                class="dice-button"
+                aria-label="Tirar d6"
+              >
+                d6
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(8)"
+                class="dice-button"
+                aria-label="Tirar d8"
+              >
+                d8
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(10)"
+                class="dice-button"
+                aria-label="Tirar d10"
+              >
+                d10
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(12)"
+                class="dice-button"
+                aria-label="Tirar d12"
+              >
+                d12
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(20)"
+                class="dice-button"
+                aria-label="Tirar d20"
+              >
+                d20
+              </button>
+              <button
+                type="button"
+                onclick="rollDie(100)"
+                class="dice-button"
+                aria-label="Tirar d100"
+              >
+                d100
+              </button>
             </div>
             <div class="custom-roll">
               <input
@@ -623,9 +848,14 @@
                 max="10"
                 value="1"
                 class="dice-input"
+                aria-label="Número de dados"
               />
               <span>d</span>
-              <select id="dice-type" class="dice-select">
+              <select
+                id="dice-type"
+                class="dice-select"
+                aria-label="Tipo de dado"
+              >
                 <option value="4">4</option>
                 <option value="6">6</option>
                 <option value="8">8</option>
@@ -634,7 +864,12 @@
                 <option value="20" selected>20</option>
                 <option value="100">100</option>
               </select>
-              <button onclick="rollCustomDice()" class="dice-button">
+              <button
+                type="button"
+                onclick="rollCustomDice()"
+                class="dice-button"
+                aria-label="Tirar dados custom"
+              >
                 Tirar dados
               </button>
               <input
@@ -642,29 +877,41 @@
                 id="dice-modifier"
                 value="0"
                 class="dice-input"
+                aria-label="Modificador"
               />
               <span>Modificador</span>
             </div>
             <div class="dice-result-container">
-              <div id="dice-animation" class="dice-animation">
+              <div
+                id="dice-animation"
+                class="dice-animation"
+                aria-hidden="true"
+              >
                 <!-- Dice animation placeholder -->
               </div>
-              <div id="dice-result" class="dice-result">Resultado: -</div>
-              <div id="dice-details" class="dice-details"></div>
+              <div id="dice-result" class="dice-result" aria-live="polite">
+                Resultado: -
+              </div>
+              <div
+                id="dice-details"
+                class="dice-details"
+                aria-live="polite"
+              ></div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="js/skills.js"></script>
-    <script src="js/features.js"></script>
-    <script src="js/spells.js"></script>
-    <script src="js/equipment.js"></script>
-    <script src="js/attacks.js"></script>
-    <script src="js/dice.js"></script>
-    <script src="js/character-portrait.js"></script>
-    <script src="js/character-data.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Load JavaScript -->
+    <script src="./js/skills.js" defer></script>
+    <script src="./js/features.js" defer></script>
+    <script src="./js/spells.js" defer></script>
+    <script src="./js/equipment.js" defer></script>
+    <script src="./js/attacks.js" defer></script>
+    <script src="./js/dice.js" defer></script>
+    <script src="./js/character-portrait.js" defer></script>
+    <script src="./js/character-data.js" defer></script>
+    <script src="./js/main.js" defer></script>
   </body>
 </html>
