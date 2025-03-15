@@ -260,25 +260,114 @@
           <div id="spells-container">
             <!-- Hechizos se cargarán desde el JSON -->
           </div>
+
           <div class="spell-add" style="margin-top: 15px">
-            <input
-              type="text"
-              id="new-spell"
-              placeholder="Añadir nuevo hechizo"
-            />
-            <select id="spell-level-select">
-              <option value="cantrip">Truco</option>
-              <option value="1">Nivel 1</option>
-              <option value="2">Nivel 2</option>
-              <option value="3">Nivel 3</option>
-              <option value="4">Nivel 4</option>
-              <option value="5">Nivel 5</option>
-              <option value="6">Nivel 6</option>
-              <option value="7">Nivel 7</option>
-              <option value="8">Nivel 8</option>
-              <option value="9">Nivel 9</option>
-            </select>
-            <button onclick="addSpell()">Añadir</button>
+            <div class="spell-add-row">
+              <input
+                type="text"
+                id="new-spell"
+                placeholder="Añadir nuevo hechizo"
+              />
+              <select id="spell-level-select">
+                <option value="cantrip">Truco</option>
+                <option value="1">Nivel 1</option>
+                <option value="2">Nivel 2</option>
+                <option value="3">Nivel 3</option>
+                <option value="4">Nivel 4</option>
+                <option value="5">Nivel 5</option>
+                <option value="6">Nivel 6</option>
+                <option value="7">Nivel 7</option>
+                <option value="8">Nivel 8</option>
+                <option value="9">Nivel 9</option>
+              </select>
+            </div>
+
+            <div class="spell-add-row">
+              <input
+                type="text"
+                id="new-spell-cast-time"
+                placeholder="Tiempo de lanzamiento"
+              />
+              <input type="text" id="new-spell-range" placeholder="Alcance" />
+              <input
+                type="text"
+                id="new-spell-duration"
+                placeholder="Duración"
+              />
+            </div>
+
+            <div class="spell-add-row">
+              <input
+                type="text"
+                id="new-spell-components"
+                placeholder="Componentes (V, S, M)"
+              />
+              <select id="new-spell-school">
+                <option value="Abjuración">Abjuración</option>
+                <option value="Adivinación">Adivinación</option>
+                <option value="Conjuración">Conjuración</option>
+                <option value="Encantamiento">Encantamiento</option>
+                <option value="Evocación">Evocación</option>
+                <option value="Ilusión">Ilusión</option>
+                <option value="Nigromancia">Nigromancia</option>
+                <option value="Transmutación">Transmutación</option>
+              </select>
+            </div>
+
+            <textarea
+              id="new-spell-description"
+              placeholder="Descripción del hechizo"
+              rows="4"
+            ></textarea>
+
+            <div class="spell-add-buttons">
+              <button onclick="addSpell()">Añadir Hechizo</button>
+              <button onclick="searchSpellDatabase()" class="secondary-button">
+                Buscar Hechizo
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal para mostrar detalles del hechizo -->
+          <div id="spell-detail-modal" class="modal">
+            <div class="modal-content">
+              <span class="close-button" onclick="closeSpellModal()"
+                >&times;</span
+              >
+              <h3 id="modal-spell-name">Nombre del Hechizo</h3>
+              <div class="spell-info-grid">
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Nivel:</span>
+                  <span id="modal-spell-level">Nivel</span>
+                </div>
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Escuela:</span>
+                  <span id="modal-spell-school">Escuela</span>
+                </div>
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Tiempo:</span>
+                  <span id="modal-spell-time">Tiempo</span>
+                </div>
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Alcance:</span>
+                  <span id="modal-spell-range">Alcance</span>
+                </div>
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Duración:</span>
+                  <span id="modal-spell-duration">Duración</span>
+                </div>
+                <div class="spell-info-item">
+                  <span class="spell-info-label">Componentes:</span>
+                  <span id="modal-spell-components">Componentes</span>
+                </div>
+              </div>
+              <div class="spell-description">
+                <p id="modal-spell-description">Descripción del hechizo.</p>
+              </div>
+              <div class="modal-buttons">
+                <button onclick="editSpellInModal()">Editar</button>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -6,7 +6,7 @@
 // Recopilar todos los datos del personaje
 function collectCharacterData() {
     return {
-        portrait: getPortraitData(), // Añadir esta línea
+        portrait: typeof getPortraitData === 'function' ? getPortraitData() : null,
         basicInfo: collectBasicInfo(),
         abilities: collectAbilities(),
         combat: collectCombatStats(),
@@ -15,13 +15,50 @@ function collectCharacterData() {
         languages: collectLanguages(),
         proficiencies: collectProficiencies(),
         features: collectFeatures(),
-        spells: collectSpells(),
+        // Llamamos a la función en spells.js en lugar de definirla aquí
+        spells: typeof collectSpells === 'function' ? collectSpells() : {},
         equipment: collectEquipment(),
-        attacks: collectAttacks(),
+        attacks: typeof collectAttacks === 'function' ? collectAttacks() : [],
         money: collectMoney(),
         personality: collectPersonality(),
         notes: document.getElementById("notes").value
     };
+}
+
+// Aplicar datos de personaje a la ficha
+function applyCharacterData(data) {
+    if (!data) return;
+
+    // Aplicar la imagen del personaje si existe la función
+    if (data.portrait && typeof applyPortraitData === 'function')
+        applyPortraitData(data.portrait);
+
+    // Aplicar cada sección de los datos
+    if (data.basicInfo) applyBasicInfo(data.basicInfo);
+    if (data.abilities) applyAbilities(data.abilities);
+    if (data.combat) applyCombatStats(data.combat);
+    if (data.savingThrows) applySavingThrows(data.savingThrows);
+    if (data.skills) applySkills(data.skills);
+    if (data.languages) applyLanguages(data.languages);
+    if (data.proficiencies) applyProficiencies(data.proficiencies);
+    if (data.features) applyFeatures(data.features);
+
+    // Llamamos a la función en spells.js en lugar de definirla aquí
+    if (data.spells && typeof applySpells === 'function')
+        applySpells(data.spells);
+
+    if (data.equipment) applyEquipment(data.equipment);
+
+    // Aplicar los ataques si existe la función
+    if (data.attacks && typeof applyAttacks === 'function')
+        applyAttacks(data.attacks);
+
+    if (data.money) applyMoney(data.money);
+    if (data.personality) applyPersonality(data.personality);
+    if (data.notes !== undefined) document.getElementById("notes").value = data.notes;
+
+    // Actualizar todos los modificadores después de cargar los datos
+    updateAllModifiers();
 }
 
 // Recopilar información básica
@@ -126,37 +163,6 @@ function collectFeatures() {
     return features;
 }
 
-// Recopilar hechizos
-function collectSpells() {
-    const spells = {};
-    document.querySelectorAll(".spell-level-container").forEach((container) => {
-        const level = container.dataset.level;
-        const spellItems = [];
-
-        container.querySelectorAll(".spell-item").forEach((item) => {
-            spellItems.push({
-                name: item.querySelector("span").textContent,
-                prepared: item.querySelector(".spell-checkbox").checked
-            });
-        });
-
-        let slots = null;
-        if (level !== "cantrip") {
-            const slotElements = container.querySelectorAll(".spell-slot");
-            slots = {
-                total: slotElements.length,
-                used: [...slotElements].filter((slot) => slot.classList.contains("used")).length
-            };
-        }
-
-        spells[level] = {
-            spells: spellItems,
-            slots: slots
-        };
-    });
-    return spells;
-}
-
 // Recopilar equipo
 function collectEquipment() {
     const equipment = [];
@@ -186,33 +192,6 @@ function collectPersonality() {
         bonds: document.getElementById("bonds").value,
         flaws: document.getElementById("flaws").value
     };
-}
-
-// Aplicar datos de personaje a la ficha
-function applyCharacterData(data) {
-    if (!data) return;
-
-    // Aplicar la imagen del personaje
-    if (data.portrait) applyPortraitData(data.portrait);
-
-    // Aplicar cada sección de los datos
-    if (data.basicInfo) applyBasicInfo(data.basicInfo);
-    if (data.abilities) applyAbilities(data.abilities);
-    if (data.combat) applyCombatStats(data.combat);
-    if (data.savingThrows) applySavingThrows(data.savingThrows);
-    if (data.skills) applySkills(data.skills);
-    if (data.languages) applyLanguages(data.languages);
-    if (data.proficiencies) applyProficiencies(data.proficiencies);
-    if (data.features) applyFeatures(data.features);
-    if (data.spells) applySpells(data.spells);
-    if (data.equipment) applyEquipment(data.equipment);
-    if (data.attacks) applyAttacks(data.attacks);
-    if (data.money) applyMoney(data.money);
-    if (data.personality) applyPersonality(data.personality);
-    if (data.notes !== undefined) document.getElementById("notes").value = data.notes;
-
-    // Actualizar todos los modificadores después de cargar los datos
-    updateAllModifiers();
 }
 
 // Aplicar información básica
@@ -372,10 +351,10 @@ function applyFeatures(features) {
 
         featureDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <input type="text" placeholder="Nombre del rasgo" style="width: auto; flex-grow: 1;" value="${feature.name}">
+          <input type="text" placeholder="Nombre del rasgo" style="width: auto; flex-grow: 1;" value="${feature.name || ''}">
           <button onclick="this.parentElement.parentElement.remove()" style="margin-left: 10px;">✕</button>
         </div>
-        <textarea placeholder="Descripción del rasgo" style="width: 100%; margin-top: 5px; min-height: 60px;">${feature.description}</textarea>
+        <textarea placeholder="Descripción del rasgo" style="width: 100%; margin-top: 5px; min-height: 60px;">${feature.description || ''}</textarea>
         ${usesHtml}
       `;
 
@@ -391,53 +370,6 @@ function applyFeatures(features) {
     });
 }
 
-// Aplicar hechizos
-function applySpells(spells) {
-    const spellsContainer = document.getElementById("spells-container");
-    spellsContainer.innerHTML = "";
-
-    for (const [level, spellData] of Object.entries(spells)) {
-        const spellLevelContainer = document.createElement("div");
-        spellLevelContainer.className = "spell-level-container";
-        spellLevelContainer.dataset.level = level;
-
-        let levelTitle = "";
-        let slotsHtml = "";
-
-        if (level === "cantrip") {
-            levelTitle = "Trucos (a voluntad)";
-        } else {
-            const levelNum = parseInt(level);
-            const slots = spellData.slots || { total: 0, used: 0 };
-            levelTitle = `Nivel ${levelNum} (${slots.total} espacios)`;
-
-            slotsHtml = '<div class="spell-slots">';
-            for (let i = 0; i < slots.total; i++) {
-                const usedClass = i < slots.used ? "used" : "";
-                slotsHtml += `<div class="spell-slot ${usedClass}" onclick="toggleSpellSlot(this)"></div>`;
-            }
-            slotsHtml += "</div>";
-        }
-
-        const spellItemsHtml = spellData.spells
-            .map((spell) => `
-          <div class="spell-item">
-            <input type="checkbox" class="spell-checkbox" ${spell.prepared ? "checked" : ""}>
-            <span>${spell.name}</span>
-            <button onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
-          </div>
-        `).join("");
-
-        spellLevelContainer.innerHTML = `
-        <div class="spell-level">${levelTitle}</div>
-        ${slotsHtml}
-        <div class="spell-items">${spellItemsHtml}</div>
-      `;
-
-        spellsContainer.appendChild(spellLevelContainer);
-    }
-}
-
 // Aplicar equipo
 function applyEquipment(equipment) {
     const equipmentList = document.getElementById("equipment-list");
@@ -448,7 +380,7 @@ function applyEquipment(equipment) {
         equipmentItem.className = "equipment-item";
         equipmentItem.innerHTML = `
         <input type="checkbox" class="equipment-checkbox" ${item.equipped ? "checked" : ""}>
-        <span>${item.name}</span>
+        <span>${item.name || ''}</span>
         <button onclick="this.parentElement.remove()" style="margin-left: auto; font-size: 10px;">✕</button>
       `;
 
