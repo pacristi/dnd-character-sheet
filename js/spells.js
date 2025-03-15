@@ -177,7 +177,7 @@ function addSpellToContainer(container, spellData) {
     spellItem.innerHTML = `
       <input type="checkbox" class="spell-checkbox" aria-label="Prepare ${spellData.name}" onchange="toggleSpellPrepared(this)">
       <span class="spell-name" role="button" tabindex="0" onclick="showSpellDetails(this)">${escapeHTML(spellData.name)}</span>
-      <button class="spell-info-button" onclick="showSpellDetails(this.parentElement)" title="Ver detalles" aria-label="View spell details">ℹ️</button>
+      <button class="spell-info-button" onclick="window.open('https://dnd5e.wikidot.com/spell:' + encodeURIComponent('${spellData.name}'), '_blank')" title="Ver detalles" aria-label="View spell details">ℹ️</button>
       <button onclick="removeSpell(this.parentElement)" aria-label="Remove spell" style="margin-left: auto; font-size: 10px;">✕</button>
     `;
 
