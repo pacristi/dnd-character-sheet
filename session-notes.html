@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notas de Sesión - D&D 5e</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/session-notes.css" />
+    <link rel="stylesheet" href="./css/nav-bar.css" />
+    <link rel="icon" type="image/png" href="./images/d20-icon.png" />
+    <meta
+      name="description"
+      content="Gestión de notas de sesión para D&D 5ª Edición"
+    />
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-navbar">
+      <div class="nav-container">
+        <div class="nav-logo">D&D 5E</div>
+        <ul class="nav-links">
+          <li><a href="index.html">Ficha de Personaje</a></li>
+          <li class="active">
+            <a href="session-notes.html">Notas de Sesión</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="main-container session-notes-container">
+      <!-- Sessions Sidebar -->
+      <div class="sessions-sidebar">
+        <div class="sidebar-header">
+          <h2>Sesiones</h2>
+          <div class="new-session-form">
+            <input
+              type="text"
+              id="new-session-name"
+              placeholder="Nombre de la nueva sesión"
+            />
+            <button id="add-session-btn">Crear Sesión</button>
+          </div>
+        </div>
+        <ul id="sessions-list" class="sessions-list">
+          <!-- Sessions will be loaded dynamically -->
+        </ul>
+        <div class="sidebar-actions">
+          <button onclick="saveSessionNotes()" title="Guardar notas">
+            💾 Guardar
+          </button>
+          <button onclick="exportSessionNotes()" title="Exportar notas">
+            📤 Exportar
+          </button>
+          <button onclick="importSessionNotes()" title="Importar notas">
+            📥 Importar
+          </button>
+        </div>
+      </div>
+
+      <!-- Session Content Area -->
+      <div class="session-content" id="session-content-area">
+        <div class="empty-state">
+          <h2>Bienvenido a las Notas de Sesión</h2>
+          <p>Crea una nueva sesión para comenzar a tomar notas.</p>
+          <p>Puedes organizar tus notas en secciones:</p>
+          <ul>
+            <li>Resumen general de la sesión</li>
+            <li>Personajes importantes</li>
+            <li>Lugares visitados</li>
+            <li>Misiones y objetivos</li>
+            <li>Tesoros encontrados</li>
+            <li>Facciones relevantes</li>
+            <li>Cronología de eventos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="./js/session-notes.js" defer></script>
+  </body>
+</html>
