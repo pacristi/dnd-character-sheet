@@ -1,6 +1,8 @@
-import { saveCharacterToStorage, loadCharacterFromStorage } from '@/utils/storage'
+// src/store/modules/character.js
+import { characterStorage } from '@/services/storageService'
+import { abilityUtils } from '@/utils/characterUtils'
 
-// Initial state for a new character
+// Initial state factory to ensure clean state every time
 const getDefaultState = () => ({
     portrait: null,
     basicInfo: {
@@ -68,11 +70,17 @@ export default {
     state: getDefaultState(),
 
     getters: {
+        /**
+         * Calculate proficiency bonus based on character level
+         */
         proficiencyBonus: (state) => {
             const level = state.basicInfo.level
             return Math.floor((level - 1) / 4) + 2
         },
 
+        /**
+         * Calculate ability modifiers for all abilities
+         */
         abilityModifiers: (state) => {
             const modifiers = {}
             Object.entries(state.abilities).forEach(([ability, score]) => {
@@ -81,6 +89,9 @@ export default {
             return modifiers
         },
 
+        /**
+         * Calculate skill modifiers based on abilities and proficiency
+         */
         skillModifiers: (state, getters) => {
             const modifiers = {}
             Object.entries(state.skills).forEach(([skill, isProficient]) => {
@@ -93,6 +104,9 @@ export default {
             return modifiers
         },
 
+        /**
+         * Calculate saving throw modifiers based on abilities and proficiency
+         */
         savingThrowModifiers: (state, getters) => {
             const modifiers = {}
             Object.entries(state.savingThrows).forEach(([ability, isProficient]) => {
@@ -104,38 +118,136 @@ export default {
             return modifiers
         },
 
+        /**
+         * Calculate passive perception
+         */
         passivePerception: (state, getters) => {
             const perceptionModifier = getters.skillModifiers['wis-perception'] || 0
             return 10 + perceptionModifier
         },
 
+        /**
+         * Determine and calculate spell attack bonus
+         */
         spellAttackBonus: (state, getters) => {
             if (!state.basicInfo.class) return 0
 
-            // Determine spellcasting ability based on class
-            let spellAbility = 'int' // Default for Wizard, Artificer, etc.
-
-            const className = state.basicInfo.class.toLowerCase()
-
-            if (['cleric', 'druid', 'ranger'].includes(className)) {
-                spellAbility = 'wis'
-            } else if (['bard', 'paladin', 'sorcerer', 'warlock'].includes(className)) {
-                spellAbility = 'cha'
-            }
+            // Get spellcasting ability based on class
+            const spellAbility = abilityUtils.getSpellcastingAbility(state.basicInfo.class)
 
             const abilityModifier = getters.abilityModifiers[spellAbility] || 0
             return abilityModifier + getters.proficiencyBonus
         },
 
+        /**
+         * Calculate spell save DC
+         */
         spellSaveDC: (state, getters) => {
             return 8 + getters.spellAttackBonus
         }
     },
 
+    actions: {
+        /**
+         * Initialize the character data from storage or default
+         */
+        initializeCharacter({ commit, dispatch }) {
+            const savedCharacter = characterStorage.loadCharacter()
+            if (savedCharacter) {
+                commit('SET_STATE', savedCharacter)
+            } else {
+                dispatch('loadDefaultCharacter')
+            }
+        },
+
+        /**
+         * Load default character state
+         */
+        loadDefaultCharacter({ commit }) {
+            try {
+                // Reset to default state
+                commit('RESET_STATE')
+
+                // Initialize skills list
+                const skillsMap = {
+                    'acrobatics': 'dex',
+                    'animal-handling': 'wis',
+                    'arcana': 'int',
+                    'athletics': 'str',
+                    'deception': 'cha',
+                    'history': 'int',
+                    'insight': 'wis',
+                    'intimidation': 'cha',
+                    'investigation': 'int',
+                    'medicine': 'wis',
+                    'nature': 'int',
+                    'perception': 'wis',
+                    'performance': 'cha',
+                    'persuasion': 'cha',
+                    'religion': 'int',
+                    'sleight-of-hand': 'dex',
+                    'stealth': 'dex',
+                    'survival': 'wis'
+                }
+
+                const skills = {}
+                Object.keys(skillsMap).forEach(skill => {
+                    skills[skill] = false
+                })
+
+                commit('SET_SKILLS', skills)
+            } catch (error) {
+                console.error('Error loading default character:', error)
+            }
+        },
+
+        /**
+         * Save character to localStorage
+         */
+        saveCharacter({ state }) {
+            return characterStorage.saveCharacter(state)
+        },
+
+        /**
+         * Export character to JSON file
+         */
+        exportCharacter({ state }) {
+            const characterData = JSON.stringify(state, null, 2)
+            const characterName = state.basicInfo.name || 'character'
+            const characterClass = state.basicInfo.class || 'class'
+            const filename = `${characterName}-${characterClass}.json`
+
+            // Create a blob and trigger download
+            const blob = new Blob([characterData], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = filename
+            link.click()
+
+            // Clean up
+            URL.revokeObjectURL(url)
+        },
+
+        /**
+         * Import character from JSON data
+         */
+        importCharacter({ commit }, characterData) {
+            commit('IMPORT_CHARACTER', characterData)
+            // Save to localStorage for persistence
+            characterStorage.saveCharacter(characterData)
+        }
+    },
+
     mutations: {
-        // Reset state to default
+        // Reset the entire state to default
         RESET_STATE(state) {
             Object.assign(state, getDefaultState())
+        },
+
+        // Set/update entire state at once
+        SET_STATE(state, newState) {
+            Object.assign(state, newState)
         },
 
         // Update basic info fields
@@ -213,7 +325,7 @@ export default {
         },
         ADD_SPELL(state, { level, spell }) {
             if (!state.spells[level]) {
-                state.spells[level] = { spells: [], slots: null }
+                state.spells[level] = { spells: [], slots: { total: 0, used: 0 } }
             }
             state.spells[level].spells.push(spell)
         },
@@ -283,91 +395,6 @@ export default {
         // Import complete character data
         IMPORT_CHARACTER(state, characterData) {
             Object.assign(state, characterData)
-        }
-    },
-
-    actions: {
-        // Initialize the character data
-        initializeCharacter({ commit, dispatch }) {
-            const savedCharacter = loadCharacterFromStorage()
-            if (savedCharacter) {
-                commit('IMPORT_CHARACTER', savedCharacter)
-            } else {
-                dispatch('loadDefaultCharacter')
-            }
-        },
-
-        // Load default character
-        async loadDefaultCharacter({ commit }) {
-            try {
-                // Normally we would fetch from a file, but for simplicity
-                // we'll initialize with the default state
-                commit('RESET_STATE')
-
-                // Initialize skills list
-                const skillsMap = {
-                    'acrobatics': 'dex',
-                    'animal-handling': 'wis',
-                    'arcana': 'int',
-                    'athletics': 'str',
-                    'deception': 'cha',
-                    'history': 'int',
-                    'insight': 'wis',
-                    'intimidation': 'cha',
-                    'investigation': 'int',
-                    'medicine': 'wis',
-                    'nature': 'int',
-                    'perception': 'wis',
-                    'performance': 'cha',
-                    'persuasion': 'cha',
-                    'religion': 'int',
-                    'sleight-of-hand': 'dex',
-                    'stealth': 'dex',
-                    'survival': 'wis'
-                }
-
-                const skills = {}
-                Object.keys(skillsMap).forEach(skill => {
-                    skills[skill] = false
-                })
-
-                commit('SET_SKILLS', skills)
-            } catch (error) {
-                console.error('Error loading default character:', error)
-            }
-        },
-
-        // Save character to localStorage
-        saveCharacter({ state }) {
-            saveCharacterToStorage(state)
-        },
-
-        // Export character to JSON file
-        exportCharacter({ state }) {
-            const characterData = JSON.stringify(state, null, 2)
-            const characterName = state.basicInfo.name || 'character'
-            const characterClass = state.basicInfo.class || 'class'
-            const filename = `${characterName}-${characterClass}.json`
-
-            // Use FileSaver.js or browser native API
-            const blob = new Blob([characterData], { type: 'application/json' })
-
-            // Create a link and trigger download
-            const url = URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = url
-            link.download = filename
-            link.click()
-
-            // Clean up
-            URL.revokeObjectURL(url)
-        },
-
-        // Import character from JSON file
-        importCharacter({ commit }, characterData) {
-            commit('IMPORT_CHARACTER', characterData)
-            // Save to localStorage for persistence
-            saveCharacterToStorage(characterData)
         }
     }
 }

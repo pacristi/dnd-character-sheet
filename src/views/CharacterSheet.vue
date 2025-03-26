@@ -63,9 +63,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Dice Roller Section -->
-      <DiceRoller />
     </div>
   </div>
 </template>
@@ -84,7 +81,6 @@ import LanguagesSection from '@/components/character/LanguagesSection.vue'
 import EquipmentSection from '@/components/character/EquipmentSection.vue'
 import PersonalitySection from '@/components/character/PersonalitySection.vue'
 import NotesSection from '@/components/character/NotesSection.vue'
-import DiceRoller from '@/components/character/DiceRoller.vue'
 
 export default {
   name: 'CharacterSheet',
@@ -100,8 +96,7 @@ export default {
     LanguagesSection,
     EquipmentSection,
     PersonalitySection,
-    NotesSection,
-    DiceRoller
+    NotesSection
   },
   inject: ['showNotification'],
   methods: {
@@ -111,6 +106,10 @@ export default {
       'exportCharacter'
     ]),
     
+    /**
+     * Import character from JSON file
+     * @param {Event} event - File input change event
+     */
     async importCharacter(event) {
       const file = event.target.files[0]
       if (!file) return
@@ -143,6 +142,7 @@ export default {
     }
   },
   created() {
+    // Initialize character data when component is created
     this.initializeCharacter()
   }
 }
