@@ -25,6 +25,7 @@
   </template>
   
   <script>
+  import { computed } from 'vue';
   import * as abilityUtils from '../utils/abilityUtils';
   
   export default {
@@ -50,7 +51,9 @@
       const abilityAbbreviation = abilityUtils.ABILITY_ABBREVIATIONS[props.skill.ability];
       
       // Format the modifier for display
-      const formattedModifier = abilityUtils.formatModifier(props.modifier);
+      const formattedModifier = computed(() => {
+        return abilityUtils.formatModifier(props.modifier);
+      });
       
       /**
        * Handle keyboard events for accessibility

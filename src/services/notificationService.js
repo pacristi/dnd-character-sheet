@@ -4,14 +4,6 @@
  */
 import { reactive } from 'vue';
 
-// Create and export a singleton instance
-export const notificationService = (function () {
-    if (!instance.state) {
-        instance.state = new NotificationService();
-    }
-    return instance.state;
-})();
-
 // Notification types
 export const NotificationType = {
     INFO: 'info',
@@ -27,11 +19,6 @@ export const NotificationType = {
  * @property {string} type - Notification type (info, success, warning, error)
  * @property {number} duration - Duration in milliseconds (0 for no auto-hide)
  */
-
-// Create a singleton instance
-const instance = {
-    state: null
-};
 
 /**
  * Notification Service Class
@@ -140,3 +127,7 @@ class NotificationService {
         return this.state.notifications;
     }
 }
+
+// Create and export a singleton instance
+const notificationServiceInstance = new NotificationService();
+export const notificationService = notificationServiceInstance;

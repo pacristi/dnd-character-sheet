@@ -7,7 +7,7 @@
       <h2>Cargar/Guardar Personaje</h2>
       <div class="actions-container">
         <Button 
-          @click="exportCharacter" 
+          @click="handleExportCharacter" 
           :loading="isExporting"
         >
           Guardar como JSON
@@ -18,7 +18,7 @@
           ref="importJsonInput"
           class="file-input"
           accept=".json"
-          @change="importCharacter"
+          @change="handleImportCharacter"
           aria-label="Importar personaje desde archivo JSON"
         />
         
@@ -52,7 +52,7 @@
   
   <script>
   import { ref } from 'vue';
-  import { useCharacterData } from '../composables/useCharacterData';
+  import { useStore } from 'vuex';
   import { fileService } from '@/services/fileService';
   import { notificationService } from '@/services/notificationService';
   import { Button, Modal } from '@/features/shared';
@@ -64,7 +64,7 @@
       Modal
     },
     setup() {
-      const { exportCharacter, importCharacter: importCharacterData, loadDefaultCharacter } = useCharacterData();
+      const store = useStore();
       
       // File input ref
       const importJsonInput = ref(null);
@@ -82,10 +82,10 @@
       const handleExportCharacter = async () => {
         try {
           isExporting.value = true;
-          await exportCharacter();
+          await store.dispatch('character/exportCharacter');
         } catch (error) {
           console.error('Error exporting character:', error);
-          notificationService.error('Error al exportar el personaje');
+          notificationService.error('Error al exportar el personaje: ' + error.message);
         } finally {
           isExporting.value = false;
         }
@@ -105,7 +105,7 @@
           const characterData = await fileService.importFromJson(file);
           
           // Import the character data
-          await importCharacterData(characterData);
+          await store.dispatch('character/importCharacter', characterData);
           
           notificationService.success('Personaje importado correctamente');
         } catch (error) {
@@ -132,7 +132,7 @@
        * Reset character to default
        */
       const resetCharacter = () => {
-        loadDefaultCharacter();
+        store.dispatch('character/loadDefaultCharacter');
         notificationService.info('Se ha creado un nuevo personaje');
       };
       
@@ -141,8 +141,8 @@
         isExporting,
         isImporting,
         showResetConfirmation,
-        exportCharacter: handleExportCharacter,
-        importCharacter: handleImportCharacter,
+        handleExportCharacter,
+        handleImportCharacter,
         confirmResetCharacter,
         resetCharacter
       };

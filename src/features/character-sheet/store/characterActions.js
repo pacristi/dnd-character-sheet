@@ -54,15 +54,34 @@ export const characterActions = {
     },
 
     /**
-     * Export character to JSON file
-     */
+ * Export character to JSON file
+ */
     async exportCharacter({ state }) {
         try {
             const characterName = state.basicInfo.name || 'personaje';
             const characterClass = state.basicInfo.class || 'clase';
             const filename = `${characterName}-${characterClass}`;
 
-            const success = await fileService.exportToJson(state, filename);
+            // Create a clean copy of the state without circular references
+            const cleanState = JSON.parse(JSON.stringify({
+                basicInfo: state.basicInfo,
+                abilities: state.abilities,
+                combat: state.combat,
+                savingThrows: state.savingThrows,
+                skills: state.skills,
+                features: state.features,
+                equipment: state.equipment,
+                attacks: state.attacks,
+                money: state.money,
+                personality: state.personality,
+                notes: state.notes,
+                portrait: state.portrait,
+                spells: state.spells,
+                languages: state.languages,
+                proficiencies: state.proficiencies
+            }));
+
+            const success = await fileService.exportToJson(cleanState, filename);
 
             if (success) {
                 notificationService.success('Personaje exportado correctamente');
@@ -71,7 +90,7 @@ export const characterActions = {
             return success;
         } catch (error) {
             console.error('Error exporting character:', error);
-            notificationService.error('Error al exportar el personaje');
+            notificationService.error('Error al exportar el personaje: ' + error.message);
             return false;
         }
     },

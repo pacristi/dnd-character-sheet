@@ -1,7 +1,8 @@
 /**
- * Storage Service
- * Handles all localStorage operations with error handling and clean abstractions
+ * Improved Storage Service
+ * Handles all localStorage operations with proper error handling
  */
+import { ERROR_CODES, tryCatch } from '../utils/errorHandling';
 
 // Storage keys for different data types
 const STORAGE_KEYS = {
@@ -29,43 +30,87 @@ class StorageService {
      * Save data to localStorage
      * @param {*} data - Data to save
      * @returns {boolean} Success status
+     * @throws {AppError} If saving fails
      */
     save(data) {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error(`Error saving data to ${this.storageKey}:`, error);
-            return false;
-        }
+        return tryCatch(
+            () => {
+                localStorage.setItem(this.storageKey, JSON.stringify(data));
+                return true;
+            },
+            ERROR_CODES.STORAGE_SAVE_ERROR,
+            `Error saving data to ${this.storageKey}`
+        );
     }
 
     /**
      * Load data from localStorage
      * @returns {*} Parsed data or defaultValue if not found
+     * @throws {AppError} If loading fails
      */
     load() {
-        try {
-            const data = localStorage.getItem(this.storageKey);
-            return data ? JSON.parse(data) : this.defaultValue;
-        } catch (error) {
-            console.error(`Error loading data from ${this.storageKey}:`, error);
-            return this.defaultValue;
-        }
+        return tryCatch(
+            () => {
+                const data = localStorage.getItem(this.storageKey);
+                return data ? JSON.parse(data) : this.defaultValue;
+            },
+            ERROR_CODES.STORAGE_LOAD_ERROR,
+            `Error loading data from ${this.storageKey}`
+        );
     }
 
     /**
      * Clear data from localStorage
      * @returns {boolean} Success status
+     * @throws {AppError} If clearing fails
      */
     clear() {
-        try {
-            localStorage.removeItem(this.storageKey);
-            return true;
-        } catch (error) {
-            console.error(`Error clearing data from ${this.storageKey}:`, error);
-            return false;
+        return tryCatch(
+            () => {
+                localStorage.removeItem(this.storageKey);
+                return true;
+            },
+            ERROR_CODES.STORAGE_DELETE_ERROR,
+            `Error clearing data from ${this.storageKey}`
+        );
+    }
+
+    /**
+     * Check if localStorage has data for this key
+     * @returns {boolean} True if data exists
+     */
+    hasData() {
+        return localStorage.getItem(this.storageKey) !== null;
+    }
+
+    /**
+     * Get storage usage information
+     * @returns {Object} Storage usage info
+     */
+    getStorageInfo() {
+        let totalStorage = 0;
+        let keyStorage = 0;
+
+        // Calculate total localStorage usage
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            totalStorage += (key.length + value.length) * 2; // UTF-16 characters = 2 bytes
         }
+
+        // Calculate storage used by this key
+        const value = localStorage.getItem(this.storageKey);
+        if (value) {
+            keyStorage = (this.storageKey.length + value.length) * 2;
+        }
+
+        return {
+            totalUsage: totalStorage,
+            keyUsage: keyStorage,
+            // Estimated quota (around 5MB for most browsers)
+            estimatedQuota: 5 * 1024 * 1024,
+            usagePercentage: (totalStorage / (5 * 1024 * 1024)) * 100
+        };
     }
 }
 
@@ -83,83 +128,89 @@ class CharacterStorageService extends StorageService {
      * Save character data to localStorage
      * @param {Object} characterData - Character data to save
      * @returns {boolean} Success status
+     * @throws {AppError} If saving fails
      */
     saveCharacter(characterData) {
-        try {
-            // Handle portrait data separately due to size
-            const portraitData = characterData.portrait;
-            const characterDataCopy = { ...characterData };
-            delete characterDataCopy.portrait;
+        return tryCatch(
+            () => {
+                // Handle portrait data separately due to size
+                const portraitData = characterData.portrait;
+                const characterDataCopy = { ...characterData };
+                delete characterDataCopy.portrait;
 
-            // Save character data
-            localStorage.setItem(this.storageKey, JSON.stringify(characterDataCopy));
+                // Save character data
+                localStorage.setItem(this.storageKey, JSON.stringify(characterDataCopy));
 
-            // Save portrait if available
-            if (portraitData) {
-                localStorage.setItem(this.portraitKey, portraitData);
-                this.cleanupOldPortraits();
-            }
+                // Save portrait if available
+                if (portraitData) {
+                    localStorage.setItem(this.portraitKey, portraitData);
+                    this.cleanupOldPortraits();
+                }
 
-            return true;
-        } catch (error) {
-            console.error('Error saving character data:', error);
-            return false;
-        }
+                return true;
+            },
+            ERROR_CODES.STORAGE_SAVE_ERROR,
+            'Error saving character data'
+        );
     }
 
     /**
      * Load character data from localStorage
      * @returns {Object} Character data
+     * @throws {AppError} If loading fails
      */
     loadCharacter() {
-        try {
-            // Load character data
-            const characterData = localStorage.getItem(this.storageKey);
-            if (!characterData) return this.defaultValue;
+        return tryCatch(
+            () => {
+                // Load character data
+                const characterData = localStorage.getItem(this.storageKey);
+                if (!characterData) return this.defaultValue;
 
-            // Parse character data
-            const parsedData = JSON.parse(characterData);
+                // Parse character data
+                const parsedData = JSON.parse(characterData);
 
-            // Add portrait data if available
-            const portraitData = localStorage.getItem(this.portraitKey);
-            if (portraitData) {
-                parsedData.portrait = portraitData;
-            }
+                // Add portrait data if available
+                const portraitData = localStorage.getItem(this.portraitKey);
+                if (portraitData) {
+                    parsedData.portrait = portraitData;
+                }
 
-            return parsedData;
-        } catch (error) {
-            console.error('Error loading character data:', error);
-            return this.defaultValue;
-        }
+                return parsedData;
+            },
+            ERROR_CODES.STORAGE_LOAD_ERROR,
+            'Error loading character data'
+        );
     }
 
     /**
      * Cleans up old portraits from localStorage to free space
+     * @returns {boolean} Success status
      */
     cleanupOldPortraits() {
-        try {
-            // Find all portrait keys (in case we have multiple portraits stored)
-            const portraitKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(this.portraitKey)) {
-                    portraitKeys.push(key);
+        return tryCatch(
+            () => {
+                // Find all portrait keys (in case we have multiple portraits stored)
+                const portraitKeys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith(this.portraitKey)) {
+                        portraitKeys.push(key);
+                    }
                 }
-            }
 
-            // If we have more than one portrait, remove the old ones
-            if (portraitKeys.length > 1) {
-                // Sort by creation time if available, otherwise just remove random ones
-                portraitKeys.slice(0, portraitKeys.length - 1).forEach(key => {
-                    localStorage.removeItem(key);
-                });
-            }
+                // If we have more than one portrait, remove the old ones
+                if (portraitKeys.length > 1) {
+                    // Sort by creation time if available, otherwise just remove random ones
+                    portraitKeys.slice(0, portraitKeys.length - 1).forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+                }
 
-            return true;
-        } catch (error) {
-            console.error('Error cleaning up old portraits:', error);
-            return false;
-        }
+                return true;
+            },
+            ERROR_CODES.STORAGE_DELETE_ERROR,
+            'Error cleaning up old portraits'
+        );
     }
 }
 
@@ -190,14 +241,15 @@ class PreferencesStorageService extends StorageService {
      * @returns {boolean} Success status
      */
     setPreference(key, value) {
-        try {
-            const preferences = this.load();
-            preferences[key] = value;
-            return this.save(preferences);
-        } catch (error) {
-            console.error(`Error saving preference ${key}:`, error);
-            return false;
-        }
+        return tryCatch(
+            () => {
+                const preferences = this.load();
+                preferences[key] = value;
+                return this.save(preferences);
+            },
+            ERROR_CODES.STORAGE_SAVE_ERROR,
+            `Error saving preference ${key}`
+        );
     }
 }
 

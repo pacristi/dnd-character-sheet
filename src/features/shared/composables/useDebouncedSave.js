@@ -2,7 +2,7 @@
  * A composable for debounced saving
  * Provides a debounced save function to avoid excessive saves during rapid changes
  */
-import { ref, onBeforeUnmount } from 'vue';
+import { ref } from 'vue';
 
 /**
  * Create a debounced save function
@@ -30,13 +30,8 @@ export function useDebouncedSave(saveFunction, defaultDelay = 1000) {
         }, delay);
     };
 
-    // Clean up the timeout on component unmount
-    onBeforeUnmount(() => {
-        if (saveTimeout.value) {
-            clearTimeout(saveTimeout.value);
-        }
-    });
-
+    // Return the function and timeout reference
+    // Note: Cleanup should be handled by component using this composable
     return {
         debouncedSave,
         saveTimeout

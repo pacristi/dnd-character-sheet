@@ -2,60 +2,100 @@
  * Combat Stats Composable
  * Provides access to combat-related stats and functions
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useCharacterData } from './useCharacterData';
 import * as abilityUtils from '../utils/abilityUtils';
-import * as equipmentUtils from '../utils/equipmentUtils';
 
 /**
  * Composable for accessing and managing combat statistics
  * @returns {Object} Combat stats and related functions
  */
 export function useCombatStats() {
-    const store = useStore();
-    const {
-        combat,
-        abilityModifiers,
-        proficiencyBonus,
-        basicInfo,
-        equipment,
-        savingThrows,
-        skills,
-        debouncedSave
-    } = useCharacterData();
+    // Get store safely
+    let store;
+    try {
+        store = useStore();
+    } catch (error) {
+        console.warn('Store not available yet in useCombatStats');
+    }
 
-    // Current HP values
+    // Get character data
+    const characterData = useCharacterData();
+
+    // Safely access properties with default values
+    const combat = computed(() => characterData.combat?.value || {
+        hp: { current: 0, max: 0, temporary: 0 },
+        deathSaves: { successes: 0, failures: 0 },
+        armorClass: 10,
+        initiative: 0,
+        speed: '9m'
+    });
+
+    const abilityModifiers = computed(() => characterData.abilityModifiers?.value || {});
+    const proficiencyBonus = computed(() => characterData.proficiencyBonus?.value || 2);
+    const basicInfo = computed(() => characterData.basicInfo?.value || {});
+    const savingThrows = computed(() => characterData.savingThrows?.value || {});
+    const skills = computed(() => characterData.skills?.value || {});
+
+    // Debounced save function
+    const saveTimeout = ref(null);
+    const debouncedSave = (delay = 1000) => {
+        if (saveTimeout.value) {
+            clearTimeout(saveTimeout.value);
+        }
+
+        saveTimeout.value = setTimeout(() => {
+            if (store) {
+                store.dispatch('character/saveCharacter');
+            }
+            saveTimeout.value = null;
+        }, delay);
+    };
+
+    // Safe commit wrapper
+    const safeCommit = (type, payload) => {
+        if (!store) {
+            console.warn(`Cannot commit ${type}: store not available`);
+            return;
+        }
+
+        try {
+            store.commit(`character/${type}`, payload);
+            debouncedSave();
+        } catch (error) {
+            console.error(`Error in commit ${type}:`, error);
+        }
+    };
+
+    // Current HP values with safe defaults
     const currentHp = computed({
-        get: () => combat.value.hp.current,
+        get: () => combat.value.hp?.current || 0,
         set: (value) => {
-            store.commit('character/SET_COMBAT_STAT', {
+            safeCommit('SET_COMBAT_STAT', {
                 stat: 'hp.current',
                 value: Math.max(0, parseInt(value) || 0)
             });
-            debouncedSave();
         }
     });
 
     const maxHp = computed({
-        get: () => combat.value.hp.max,
+        get: () => combat.value.hp?.max || 1,
         set: (value) => {
-            store.commit('character/SET_COMBAT_STAT', {
+            safeCommit('SET_COMBAT_STAT', {
                 stat: 'hp.max',
                 value: Math.max(1, parseInt(value) || 1)
             });
-            debouncedSave();
         }
     });
 
     const temporaryHp = computed({
-        get: () => combat.value.hp.temporary || 0,
+        get: () => combat.value.hp?.temporary || 0,
         set: (value) => {
-            store.commit('character/SET_COMBAT_STAT', {
+            safeCommit('SET_COMBAT_STAT', {
                 stat: 'hp.temporary',
                 value: Math.max(0, parseInt(value) || 0)
             });
-            debouncedSave();
         }
     });
 
@@ -67,7 +107,7 @@ export function useCombatStats() {
     // Calculate saving throw modifiers
     const savingThrowModifiers = computed(() => {
         const modifiers = {};
-        Object.entries(savingThrows.value).forEach(([ability, isProficient]) => {
+        Object.entries(savingThrows.value || {}).forEach(([ability, isProficient]) => {
             const baseModifier = abilityModifiers.value[ability] || 0;
             modifiers[ability] = isProficient
                 ? baseModifier + proficiencyBonus.value
@@ -88,24 +128,6 @@ export function useCombatStats() {
 
     // Calculate armor class
     const armorClass = computed(() => {
-        // Check for equipped armor
-        const equippedArmor = equipment.value.find(item =>
-            item.equipped && equipmentUtils.findArmor(item.name)
-        );
-
-        const hasShield = equipment.value.some(item =>
-            item.equipped && item.name.toLowerCase().includes('escudo')
-        );
-
-        if (equippedArmor) {
-            return equipmentUtils.calculateArmorClass(
-                equippedArmor.name,
-                abilityModifiers.value,
-                hasShield
-            );
-        }
-
-        // If no armor is equipped, calculate unarmored AC
         return 10 + (abilityModifiers.value.dex || 0);
     });
 
@@ -118,7 +140,7 @@ export function useCombatStats() {
     });
 
     const spellcastingAbility = computed(() =>
-        abilityUtils.getSpellcastingAbility(basicInfo.value.class)
+        abilityUtils.getSpellcastingAbility(basicInfo.value.class || '')
     );
 
     const spellcastingAbilityName = computed(() =>
@@ -139,51 +161,15 @@ export function useCombatStats() {
 
     // Update functions
     const updateDeathSaves = (type, value) => {
-        store.commit('character/SET_COMBAT_STAT', {
+        safeCommit('SET_COMBAT_STAT', {
             stat: `deathSaves.${type}`,
             value: Math.max(0, Math.min(3, value))
         });
-        debouncedSave();
     };
 
-    const applyDamage = (amount) => {
-        // First use up any temporary HP
-        const tempHp = combat.value.hp.temporary || 0;
-        const remainingDamage = Math.max(0, amount - tempHp);
-        const newTempHp = Math.max(0, tempHp - amount);
-
-        // Apply remaining damage to current HP
-        const newCurrentHp = Math.max(0, currentHp.value - remainingDamage);
-
-        // Update the stats
-        store.commit('character/SET_COMBAT_STAT', { stat: 'hp.temporary', value: newTempHp });
-        store.commit('character/SET_COMBAT_STAT', { stat: 'hp.current', value: newCurrentHp });
-
-        debouncedSave();
-
-        return {
-            currentHp: newCurrentHp,
-            temporaryHp: newTempHp,
-            unconscious: newCurrentHp <= 0
-        };
-    };
-
-    const heal = (amount) => {
-        const newCurrentHp = Math.min(maxHp.value, currentHp.value + amount);
-
-        store.commit('character/SET_COMBAT_STAT', { stat: 'hp.current', value: newCurrentHp });
-        debouncedSave();
-
-        return {
-            currentHp: newCurrentHp,
-            healed: newCurrentHp - currentHp.value
-        };
-    };
-
-    const resetDeathSaves = () => {
-        store.commit('character/SET_COMBAT_STAT', { stat: 'deathSaves.successes', value: 0 });
-        store.commit('character/SET_COMBAT_STAT', { stat: 'deathSaves.failures', value: 0 });
-        debouncedSave();
+    // Update combat stat
+    const updateCombatStat = (stat, value) => {
+        safeCommit('SET_COMBAT_STAT', { stat, value });
     };
 
     return {
@@ -191,6 +177,7 @@ export function useCombatStats() {
         currentHp,
         maxHp,
         temporaryHp,
+        combat,
 
         // Death saves
         deathSaves,
@@ -212,8 +199,9 @@ export function useCombatStats() {
 
         // Actions
         updateDeathSaves,
-        applyDamage,
-        heal,
-        resetDeathSaves
+        updateCombatStat,
+
+        // Helpers
+        debouncedSave
     };
 }
