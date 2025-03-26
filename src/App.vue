@@ -1,45 +1,46 @@
+<!-- 
+  App Component
+  The root component of the application 
+-->
 <template>
+  <div id="app">
     <AppHeader />
     <main>
       <router-view />
     </main>
-    <Notification ref="notification" />
-  </template>
-  
-  <script>
-  import AppHeader from '@/components/AppHeader.vue'
-  import Notification from '@/components/ui/Notification.vue'
-  
-  export default {
-    name: 'App',
-    components: {
-      AppHeader,
-      Notification
-    },
-    provide() {
-      return {
-        showNotification: this.showNotification
-      }
-    },
-    methods: {
-      showNotification(message, type = 'info') {
-        this.$refs.notification.show(message, type)
-      }
-    }
+    <NotificationContainer />
+  </div>
+</template>
+
+<script>
+import { AppHeader } from '@/features/shared/components';
+import { NotificationContainer } from '@/features/shared/components';
+
+export default {
+  name: 'App',
+  components: {
+    AppHeader,
+    NotificationContainer
   }
-  </script>
-  
-  <style>
-  #app {
-    font-family: var(--font-family);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    color: var(--color-text);
-  }
-  
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--spacing-lg);
-  }
-  </style>
+};
+</script>
+
+<style>
+@import './assets/styles/variables.css';
+@import './assets/styles/main.css';
+
+#app {
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  min-height: 100vh;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+</style>

@@ -1,74 +1,137 @@
-// src/services/storageService.js
 /**
- * Storage Service: Handles all storage-related operations
- * Following single responsibility principle - this service is only concerned with storage
+ * Storage Service
+ * Handles all localStorage operations with error handling and clean abstractions
  */
 
-// Storage keys
+// Storage keys for different data types
 const STORAGE_KEYS = {
     CHARACTER: 'dnd-character-data',
-    SESSIONS: 'dnd-session-notes',
     PORTRAIT: 'dnd-character-portrait',
+    SESSIONS: 'dnd-session-notes',
     PREFERENCES: 'dnd-user-preferences'
+};
+
+/**
+ * Base Storage Service class
+ * Provides methods for saving and loading data from localStorage
+ */
+class StorageService {
+    /**
+     * @param {string} storageKey - localStorage key to use
+     * @param {*} defaultValue - Default value to return if storage is empty
+     */
+    constructor(storageKey, defaultValue = null) {
+        this.storageKey = storageKey;
+        this.defaultValue = defaultValue;
+    }
+
+    /**
+     * Save data to localStorage
+     * @param {*} data - Data to save
+     * @returns {boolean} Success status
+     */
+    save(data) {
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error(`Error saving data to ${this.storageKey}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Load data from localStorage
+     * @returns {*} Parsed data or defaultValue if not found
+     */
+    load() {
+        try {
+            const data = localStorage.getItem(this.storageKey);
+            return data ? JSON.parse(data) : this.defaultValue;
+        } catch (error) {
+            console.error(`Error loading data from ${this.storageKey}:`, error);
+            return this.defaultValue;
+        }
+    }
+
+    /**
+     * Clear data from localStorage
+     * @returns {boolean} Success status
+     */
+    clear() {
+        try {
+            localStorage.removeItem(this.storageKey);
+            return true;
+        } catch (error) {
+            console.error(`Error clearing data from ${this.storageKey}:`, error);
+            return false;
+        }
+    }
 }
 
 /**
- * Character Storage API
+ * Character Storage Service
+ * Handles saving and loading character data with special handling for portraits
  */
-export const characterStorage = {
+class CharacterStorageService extends StorageService {
+    constructor() {
+        super(STORAGE_KEYS.CHARACTER, {});
+        this.portraitKey = STORAGE_KEYS.PORTRAIT;
+    }
+
     /**
-     * Saves character data to localStorage
+     * Save character data to localStorage
      * @param {Object} characterData - Character data to save
-     * @returns {Boolean} Success status
+     * @returns {boolean} Success status
      */
     saveCharacter(characterData) {
         try {
             // Handle portrait data separately due to size
-            const portraitData = characterData.portrait
-            const characterDataCopy = { ...characterData }
-            delete characterDataCopy.portrait
+            const portraitData = characterData.portrait;
+            const characterDataCopy = { ...characterData };
+            delete characterDataCopy.portrait;
 
             // Save character data
-            localStorage.setItem(STORAGE_KEYS.CHARACTER, JSON.stringify(characterDataCopy))
+            localStorage.setItem(this.storageKey, JSON.stringify(characterDataCopy));
 
             // Save portrait if available
             if (portraitData) {
-                localStorage.setItem(STORAGE_KEYS.PORTRAIT, portraitData)
-                this.cleanupOldPortraits()
+                localStorage.setItem(this.portraitKey, portraitData);
+                this.cleanupOldPortraits();
             }
 
-            return true
+            return true;
         } catch (error) {
-            console.error('Error saving character data to storage:', error)
-            return false
+            console.error('Error saving character data:', error);
+            return false;
         }
-    },
+    }
 
     /**
-     * Loads character data from localStorage
-     * @returns {Object|null} Character data or null if not found
+     * Load character data from localStorage
+     * @returns {Object} Character data
      */
     loadCharacter() {
         try {
             // Load character data
-            const characterData = localStorage.getItem(STORAGE_KEYS.CHARACTER)
-            if (!characterData) return null
+            const characterData = localStorage.getItem(this.storageKey);
+            if (!characterData) return this.defaultValue;
 
             // Parse character data
-            const parsedData = JSON.parse(characterData)
+            const parsedData = JSON.parse(characterData);
 
             // Add portrait data if available
-            const portraitData = localStorage.getItem(STORAGE_KEYS.PORTRAIT)
+            const portraitData = localStorage.getItem(this.portraitKey);
             if (portraitData) {
-                parsedData.portrait = portraitData
+                parsedData.portrait = portraitData;
             }
 
-            return parsedData
+            return parsedData;
         } catch (error) {
-            console.error('Error loading character data from storage:', error)
-            return null
+            console.error('Error loading character data:', error);
+            return this.defaultValue;
         }
-    },
+    }
 
     /**
      * Cleans up old portraits from localStorage to free space
@@ -76,11 +139,11 @@ export const characterStorage = {
     cleanupOldPortraits() {
         try {
             // Find all portrait keys (in case we have multiple portraits stored)
-            const portraitKeys = []
+            const portraitKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i)
-                if (key.startsWith(STORAGE_KEYS.PORTRAIT)) {
-                    portraitKeys.push(key)
+                const key = localStorage.key(i);
+                if (key && key.startsWith(this.portraitKey)) {
+                    portraitKeys.push(key);
                 }
             }
 
@@ -88,107 +151,57 @@ export const characterStorage = {
             if (portraitKeys.length > 1) {
                 // Sort by creation time if available, otherwise just remove random ones
                 portraitKeys.slice(0, portraitKeys.length - 1).forEach(key => {
-                    localStorage.removeItem(key)
-                })
+                    localStorage.removeItem(key);
+                });
             }
 
-            return true
+            return true;
         } catch (error) {
-            console.error('Error cleaning up old portraits:', error)
-            return false
+            console.error('Error cleaning up old portraits:', error);
+            return false;
         }
     }
 }
 
 /**
- * Session Storage API
+ * Preferences Storage Service
+ * Handles user preferences
  */
-export const sessionStorage = {
-    /**
-     * Saves session notes to localStorage
-     * @param {Array} sessions - Session notes to save
-     * @returns {Boolean} Success status
-     */
-    saveSessions(sessions) {
-        try {
-            localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions))
-            return true
-        } catch (error) {
-            console.error('Error saving session notes to storage:', error)
-            return false
-        }
-    },
-
-    /**
-     * Loads session notes from localStorage
-     * @returns {Array} Session notes or empty array if not found
-     */
-    loadSessions() {
-        try {
-            const sessions = localStorage.getItem(STORAGE_KEYS.SESSIONS)
-            return sessions ? JSON.parse(sessions) : []
-        } catch (error) {
-            console.error('Error loading session notes from storage:', error)
-            return []
-        }
+class PreferencesStorageService extends StorageService {
+    constructor() {
+        super(STORAGE_KEYS.PREFERENCES, {});
     }
-}
 
-/**
- * Preferences Storage API
- */
-export const preferencesStorage = {
     /**
-     * Saves a user preference to localStorage
-     * @param {String} key - Preference key
+     * Get a specific preference value
+     * @param {string} key - Preference key
+     * @param {*} defaultValue - Default value to return if not found
+     * @returns {*} Preference value or default
+     */
+    getPreference(key, defaultValue = null) {
+        const preferences = this.load();
+        return key in preferences ? preferences[key] : defaultValue;
+    }
+
+    /**
+     * Set a specific preference value
+     * @param {string} key - Preference key
      * @param {*} value - Preference value
-     * @returns {Boolean} Success status
+     * @returns {boolean} Success status
      */
-    savePreference(key, value) {
+    setPreference(key, value) {
         try {
-            // Load existing preferences
-            const preferences = this.loadAllPreferences()
-
-            // Update preference
-            preferences[key] = value
-
-            // Save back to storage
-            localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(preferences))
-
-            return true
+            const preferences = this.load();
+            preferences[key] = value;
+            return this.save(preferences);
         } catch (error) {
-            console.error('Error saving preference to storage:', error)
-            return false
-        }
-    },
-
-    /**
-     * Loads a user preference from localStorage
-     * @param {String} key - Preference key
-     * @param {*} defaultValue - Default value if preference not found
-     * @returns {*} Preference value or default value
-     */
-    loadPreference(key, defaultValue = null) {
-        try {
-            const preferences = this.loadAllPreferences()
-            return key in preferences ? preferences[key] : defaultValue
-        } catch (error) {
-            console.error('Error loading preference from storage:', error)
-            return defaultValue
-        }
-    },
-
-    /**
-     * Loads all user preferences from localStorage
-     * @returns {Object} All preferences
-     */
-    loadAllPreferences() {
-        try {
-            const preferences = localStorage.getItem(STORAGE_KEYS.PREFERENCES)
-            return preferences ? JSON.parse(preferences) : {}
-        } catch (error) {
-            console.error('Error loading preferences from storage:', error)
-            return {}
+            console.error(`Error saving preference ${key}:`, error);
+            return false;
         }
     }
 }
+
+// Export service instances
+export const characterStorage = new CharacterStorageService();
+export const sessionStorage = new StorageService(STORAGE_KEYS.SESSIONS, []);
+export const preferencesStorage = new PreferencesStorageService();
