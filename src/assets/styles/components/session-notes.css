@@ -1,18 +1,11 @@
-/* Session Notes Stylesheet */
-
 /* Session Notes Layout */
 .session-notes-container {
   max-width: 1400px;
-  padding: 20px;
   margin: 0 auto;
   margin-top: 20px;
   display: flex;
   gap: 20px;
   min-height: calc(100vh - 120px);
-}
-
-body {
-  padding-top: 0;
 }
 
 /* Sessions Sidebar */
@@ -231,67 +224,6 @@ body {
   resize: vertical;
   font-size: 16px;
   line-height: 1.5;
-}
-
-/* Entity lists */
-.entity-list {
-  margin-bottom: 20px;
-}
-
-.entity-item {
-  background-color: var(--color-highlight);
-  border-radius: 5px;
-  margin-bottom: 10px;
-  padding: 10px 15px;
-}
-
-.entity-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.entity-name {
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.entity-actions {
-  display: flex;
-  gap: 5px;
-}
-
-.entity-edit-btn,
-.entity-delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 5px;
-  color: var(--color-primary);
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.entity-edit-btn:hover,
-.entity-delete-btn:hover {
-  opacity: 1;
-  background: none;
-}
-
-.entity-details {
-  margin-top: 10px;
-  font-size: 14px;
-  white-space: pre-wrap;
-}
-
-.entity-add {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.entity-add input {
-  flex-grow: 1;
 }
 
 /* Timeline specific styles */

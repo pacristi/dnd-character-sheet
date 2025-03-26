@@ -1,0 +1,21 @@
+/* CSS Variables for consistent theming */
+:root {
+  --color-primary: #75482e;
+  --color-primary-dark: #5a3723;
+  --color-secondary: #a58e62;
+  --color-secondary-dark: #8a7549;
+  --color-background: #f5e9d9;
+  --color-paper: rgba(255, 255, 255, 0.7);
+  --color-highlight: #f0e0c0;
+  --color-text: #3a2d1f;
+  --border-radius: 10px;
+  --box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  --border-standard: 1px solid var(--color-secondary);
+  --border-double: 3px double var(--color-primary);
+  --font-family: "Bookman Old Style", Georgia, serif;
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --spacing-xl: 80px;
+}
